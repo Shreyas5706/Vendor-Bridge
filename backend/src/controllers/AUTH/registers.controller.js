@@ -4,27 +4,16 @@ import Company from "../../models/company.model.js";
 import Manager from "../../models/manager.model.js";
 import PurchaseOfficer from "../../models/po.model.js";
 import Vendor from "../../models/vendor.model.js";
-import { generateToken } from "../../utils/generateToken.js";
-import { checkOTP } from "./verifyOTP.js";
 
 /**
- * Role-based registration controller.
- *
- * Flow for COMPANY / VENDOR:
- *   1. POST /send-otp   { email }            → OTP sent to user's email
- *   2. POST /register   { email, otp, role, ...fields }
- *
- * Flow for MANAGER / PO:
- *   1. GET  /find-company?email=<companyEmail>  → returns { _id, name, email }
- *   2. POST /send-otp   { email: companyEmail } → OTP sent to the COMPANY's email
- *   3. POST /register   { email: <userEmail>, companyEmail, otp, companyId, role, ...fields }
- *      OTP is verified against companyEmail (where it was sent), not the user's own email.
+ * Controller to handle role-based registration
+ * Destructures body, extracts role, validates, hashes passwords, and saves records 
+ * according to the respective schema requirements.
  */
 export const register = async (req, res) => {
   try {
-    const { role, email, otp, companyEmail } = req.body;
+    const { role } = req.body;
 
-    // --- Required fields on every request ---
     if (!role) {
       return res.status(400).json({
         success: false,
@@ -33,78 +22,45 @@ export const register = async (req, res) => {
     }
 
     const normalizedRole = role.toUpperCase().trim();
-    const allowedRoles = ["COMPANY", "MANAGER", "PO", "VENDOR"];
 
+    // Validate that the role is supported
+    const allowedRoles = ["COMPANY", "MANAGER", "PO", "VENDOR"];
     if (!allowedRoles.includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid role. Allowed: ${allowedRoles.join(", ")}`,
+        message: `Invalid role: ${role}. Allowed roles are: ${allowedRoles.join(", ")}`,
       });
     }
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required for registration",
-      });
-    }
-
-    const isCompanyRole = normalizedRole === "MANAGER" || normalizedRole === "PO";
-
-    // --- Verify OTP only for PO and MANAGER ---
-    if (isCompanyRole) {
-      if (!otp) {
-        return res.status(400).json({
-          success: false,
-          message: "OTP is required for MANAGER and PO registration",
-        });
-      }
-
-      if (!companyEmail) {
-        return res.status(400).json({
-          success: false,
-          message: "companyEmail is required for MANAGER and PO registration (OTP was sent there)",
-        });
-      }
-
-      const otpResult = await checkOTP(companyEmail, otp);
-      if (!otpResult.valid) {
-        return res.status(400).json({
-          success: false,
-          message: otpResult.reason,
-        });
-      }
-    }
-
-    // --- Helper: cross-collection duplicate email check ---
-    const checkEmailExists = async (emailToCheck) => {
-      const lower = emailToCheck.toLowerCase().trim();
-      const [c, m, p, v] = await Promise.all([
-        Company.findOne({ email: lower }),
-        Manager.findOne({ email: lower }),
-        PurchaseOfficer.findOne({ email: lower }),
-        Vendor.findOne({ email: lower }),
+    // Helper to check if email already exists in any collection
+    const checkEmailExists = async (email) => {
+      const emailLower = email.toLowerCase().trim();
+      const [companyExists, managerExists, poExists, vendorExists] = await Promise.all([
+        Company.findOne({ email: emailLower }),
+        Manager.findOne({ email: emailLower }),
+        PurchaseOfficer.findOne({ email: emailLower }),
+        Vendor.findOne({ email: emailLower }),
       ]);
-      return c || m || p || v;
+      return companyExists || managerExists || poExists || vendorExists;
     };
 
-    // --------------------------------------------------------
-    // COMPANY
-    // --------------------------------------------------------
+    // ----------------------------------------------------
+    // COMPANY REGISTRATION
+    // ----------------------------------------------------
     if (normalizedRole === "COMPANY") {
-      const { name, password, contactNo, country, description } = req.body;
+      const { name, email, password, contactNo, country, description } = req.body;
 
-      if (!name || !password || !contactNo || !country) {
+      if (!name || !email || !password || !contactNo || !country) {
         return res.status(400).json({
           success: false,
-          message: "name, email, password, contactNo, and country are required",
+          message: "Name, email, password, contactNo, and country are required for Company registration",
         });
       }
 
       if (await checkEmailExists(email)) {
         return res.status(400).json({
           success: false,
-          message: "Email is already registered",
+          message: "Email is already registered in the system",
         });
       }
 
@@ -112,7 +68,7 @@ export const register = async (req, res) => {
 
       const newCompany = new Company({
         name,
-        email: email.toLowerCase().trim(),
+        email,
         password: hashedPassword,
         contactNo,
         country,
@@ -122,28 +78,26 @@ export const register = async (req, res) => {
 
       await newCompany.save();
 
-      const token = generateToken(newCompany);
       const responseData = newCompany.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
         message: "Company registered successfully",
-        token,
         data: responseData,
       });
     }
 
-    // --------------------------------------------------------
-    // MANAGER
-    // --------------------------------------------------------
+    // ----------------------------------------------------
+    // MANAGER REGISTRATION
+    // ----------------------------------------------------
     if (normalizedRole === "MANAGER") {
-      const { companyId, name, password, contactNo } = req.body;
+      const { companyId, name, email, password, contactNo } = req.body;
 
-      if (!companyId || !name || !password || !contactNo) {
+      if (!companyId || !name || !email || !password || !contactNo) {
         return res.status(400).json({
           success: false,
-          message: "companyId, name, email, password, and contactNo are required",
+          message: "companyId, name, email, password, and contactNo are required for Manager registration",
         });
       }
 
@@ -154,6 +108,7 @@ export const register = async (req, res) => {
         });
       }
 
+      // Verify Company exists
       const targetCompany = await Company.findById(companyId);
       if (!targetCompany) {
         return res.status(404).json({
@@ -165,7 +120,7 @@ export const register = async (req, res) => {
       if (await checkEmailExists(email)) {
         return res.status(400).json({
           success: false,
-          message: "Email is already registered",
+          message: "Email is already registered in the system",
         });
       }
 
@@ -174,7 +129,7 @@ export const register = async (req, res) => {
       const newManager = new Manager({
         companyId,
         name,
-        email: email.toLowerCase().trim(),
+        email,
         password: hashedPassword,
         contactNo,
         role: "MANAGER",
@@ -182,31 +137,30 @@ export const register = async (req, res) => {
 
       await newManager.save();
 
+      // Update Company reference
       targetCompany.manager = newManager._id;
       await targetCompany.save();
 
-      const token = generateToken(newManager);
       const responseData = newManager.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
-        message: "Manager registered and linked to Company",
-        token,
+        message: "Manager registered successfully and linked to Company",
         data: responseData,
       });
     }
 
-    // --------------------------------------------------------
-    // PURCHASE OFFICER (PO)
-    // --------------------------------------------------------
+    // ----------------------------------------------------
+    // PURCHASE OFFICER (PO) REGISTRATION
+    // ----------------------------------------------------
     if (normalizedRole === "PO") {
-      const { companyId, name, password, contactNo } = req.body;
+      const { companyId, name, email, password, contactNo } = req.body;
 
-      if (!companyId || !name || !password || !contactNo) {
+      if (!companyId || !name || !email || !password || !contactNo) {
         return res.status(400).json({
           success: false,
-          message: "companyId, name, email, password, and contactNo are required",
+          message: "companyId, name, email, password, and contactNo are required for Purchase Officer registration",
         });
       }
 
@@ -217,6 +171,7 @@ export const register = async (req, res) => {
         });
       }
 
+      // Verify Company exists
       const targetCompany = await Company.findById(companyId);
       if (!targetCompany) {
         return res.status(404).json({
@@ -228,7 +183,7 @@ export const register = async (req, res) => {
       if (await checkEmailExists(email)) {
         return res.status(400).json({
           success: false,
-          message: "Email is already registered",
+          message: "Email is already registered in the system",
         });
       }
 
@@ -237,7 +192,7 @@ export const register = async (req, res) => {
       const newPO = new PurchaseOfficer({
         companyId,
         name,
-        email: email.toLowerCase().trim(),
+        email,
         password: hashedPassword,
         contactNo,
         role: "PO",
@@ -245,47 +200,43 @@ export const register = async (req, res) => {
 
       await newPO.save();
 
+      // Push PO reference to Company array
       targetCompany.PO.push(newPO._id);
       await targetCompany.save();
 
-      const token = generateToken(newPO);
       const responseData = newPO.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
-        message: "Purchase Officer registered and linked to Company",
-        token,
+        message: "Purchase Officer registered successfully and linked to Company",
         data: responseData,
       });
     }
 
-    // --------------------------------------------------------
-    // VENDOR
-    // --------------------------------------------------------
+    // ----------------------------------------------------
+    // VENDOR REGISTRATION
+    // ----------------------------------------------------
     if (normalizedRole === "VENDOR") {
-      const { name, password, contactNo, country, description } = req.body;
+      const { name, email, contactNo, country, description } = req.body;
 
-      if (!name || !password || !contactNo || !country) {
+      if (!name || !email || !contactNo || !country) {
         return res.status(400).json({
           success: false,
-          message: "name, email, password, contactNo, and country are required",
+          message: "Name, email, contactNo, and country are required for Vendor registration",
         });
       }
 
       if (await checkEmailExists(email)) {
         return res.status(400).json({
           success: false,
-          message: "Email is already registered",
+          message: "Email is already registered in the system",
         });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       const newVendor = new Vendor({
         name,
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
+        email,
         contactNo,
         country,
         description,
@@ -295,19 +246,15 @@ export const register = async (req, res) => {
 
       await newVendor.save();
 
-      const token = generateToken(newVendor);
-      const responseData = newVendor.toObject();
-      delete responseData.password;
-
       return res.status(201).json({
         success: true,
         message: "Vendor registered successfully",
-        token,
-        data: responseData,
+        data: newVendor,
       });
     }
+
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Registration controller error:", error);
     return res.status(500).json({
       success: false,
       message: "Server error during registration",

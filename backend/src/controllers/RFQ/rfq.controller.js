@@ -23,7 +23,7 @@ export const createRFQ = async (req, res) => {
     // Automatically trigger update for any expired RFQs first
     await RFQ.updateExpiredStatus();
 
-    const { title, description, items, deadline, assignedVendors } = req.body;
+    const { title, description, items, deadline, assignedVendors, status } = req.body;
 
     // 2. Validation: Required fields
     if (!title || !items || !deadline || !assignedVendors) {
@@ -110,13 +110,14 @@ export const createRFQ = async (req, res) => {
 
     // 3. Create RFQ
     const newRFQ = new RFQ({
+      companyId: po.companyId,
       title,
       description,
       items,
       deadline: deadlineDate,
       assignedVendors: validVendorIds,
       createdBy: po._id,
-      status: "ACTIVE",
+      status: status === "DRAFT" ? "DRAFT" : "ACTIVE",
     });
 
     await newRFQ.save();

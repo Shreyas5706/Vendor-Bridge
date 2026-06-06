@@ -40,9 +40,22 @@ authRouter.post("/logout", logout);
 // Company Dashboard details
 authRouter.get("/company-dashboard", authUser, getCompanyDashboard);
 
+// Vendor Dashboard details
+import { getVendorDashboard } from "../controllers/AUTH/vendor-dashboard.js";
+authRouter.get("/vendor-dashboard", authUser, getVendorDashboard);
+
+// Vendor Search
+import { searchVendors } from "../controllers/AUTH/vendor.controller.js";
+authRouter.get("/vendors/search", authUser, searchVendors);
+
 // RFQ routes
 authRouter.post("/rfq", authUser, createRFQ);
 authRouter.get("/rfq", authUser, getRFQs);
 authRouter.get("/rfq/:id", authUser, getRFQById);
+
+// Quotation routes
+import { submitQuotation, approveQuotation } from "../controllers/RFQ/quotation.controller.js";
+authRouter.post("/quotation", authUser, submitQuotation);
+authRouter.post("/quotation/:id/approve", authUser, approveQuotation);
 
 export default authRouter;

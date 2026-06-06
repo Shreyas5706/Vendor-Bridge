@@ -2,21 +2,35 @@ import mongoose from "mongoose";
 
 const rfqSchema = new mongoose.Schema(
   {
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseOfficer",
+      required: true,
+    },
+
     title: {
       type: String,
       required: true,
       trim: true,
     },
+
     description: {
       type: String,
+      required: true,
       trim: true,
     },
+
     items: [
       {
         productName: {
           type: String,
           required: true,
-          trim: true,
         },
         quantity: {
           type: Number,
@@ -26,30 +40,41 @@ const rfqSchema = new mongoose.Schema(
         unit: {
           type: String,
           required: true,
-          trim: true,
         },
-      },
+      }
     ],
+
     deadline: {
       type: Date,
       required: true,
     },
+
     assignedVendors: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Vendor",
-        required: true,
       },
     ],
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchaseOfficer",
-      required: true,
-    },
+
+    quotations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quotation",
+      },
+    ],
+
     status: {
       type: String,
-      enum: ["ACTIVE", "CLOSED", "PO_GENERATED", "DRAFT", "INACTIVE"],
-      default: "ACTIVE",
+      enum: [
+        "DRAFT",
+        "OPEN",
+        "ACTIVE",
+        "INACTIVE",
+        "CLOSED",
+        "AWARDED",
+        "CANCELLED",
+      ],
+      default: "DRAFT",
     },
   },
   {
@@ -57,13 +82,15 @@ const rfqSchema = new mongoose.Schema(
   }
 );
 
-// Static method to automatically transition RFQs past their deadline to INACTIVE
 rfqSchema.statics.updateExpiredStatus = async function () {
-  return await this.updateMany(
-    { deadline: { $lt: new Date() }, status: "ACTIVE" },
+  const currentDate = new Date();
+  await this.updateMany(
+    { deadline: { $lt: currentDate }, status: { $in: ["OPEN", "ACTIVE"] } },
     { $set: { status: "INACTIVE" } }
   );
 };
 
-const RFQ = mongoose.models.RFQ || mongoose.model("RFQ", rfqSchema);
+const RFQ =
+  mongoose.models.RFQ || mongoose.model("RFQ", rfqSchema);
+
 export default RFQ;

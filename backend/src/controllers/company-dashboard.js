@@ -1,5 +1,6 @@
 import Company from "../../models/company.model.js";
 import RFQ from "../models/rfq.model.js";
+import Vendor from "../../models/vendor.model.js";
 
 /**
  * Get company dashboard data (manager, PO list, and RFQs)
@@ -31,13 +32,17 @@ export const getCompanyDashboard = async (req, res) => {
       .populate("assignedVendors", "name email contactNo status")
       .sort({ createdAt: -1 });
 
+    // 4. Find all vendors to populate the vendor list
+    const vendors = await Vendor.find().select("-password");
+
     const companyResponse = company.toObject();
     if (companyResponse.password) delete companyResponse.password;
 
     return res.status(200).json({
       success: true,
       company: companyResponse,
-      rfqs: rfqs
+      rfqs: rfqs,
+      vendors: vendors
     });
 
   } catch (error) {

@@ -1,6 +1,9 @@
 import Company from "../../models/company.model.js";
 import RFQ from "../../models/rfq.model.js";
 import Vendor from "../../models/vendor.model.js";
+import Manager from "../../models/manager.model.js";
+import PurchaseOfficer from "../../models/po.model.js";
+import Quotation from "../../models/quotation.model.js";
 
 /**
  * Get company dashboard data (manager, PO list, RFQs, and all Vendors)
@@ -9,15 +12,28 @@ export const getCompanyDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    let companyIdToUse = userId;
+
+    // Check if user is a Manager or PO
+    const manager = await Manager.findById(userId);
+    if (manager) {
+      companyIdToUse = manager.companyId;
+    } else {
+      const po = await PurchaseOfficer.findById(userId);
+      if (po) {
+        companyIdToUse = po.companyId;
+      }
+    }
+
     // 1. Find the company and populate manager and PO list
-    const company = await Company.findById(userId)
-      .populate("manager", "name email contactNo role createdAt")
-      .populate("PO", "name email contactNo role createdAt");
+    const company = await Company.findById(companyIdToUse)
+      .populate("manager", "name email contactNo role")
+      .populate("PO", "name email contactNo role");
 
     if (!company) {
       return res.status(403).json({
         success: false,
-        message: "Access denied. Only Companies can view this dashboard.",
+        message: "Access denied. Only Companies, Managers, and POs can view this dashboard.",
       });
     }
 
@@ -32,8 +48,15 @@ export const getCompanyDashboard = async (req, res) => {
       .populate("assignedVendors", "name email contactNo status")
       .sort({ createdAt: -1 });
 
-    // 4. Fetch all vendors so the company can see and manage supplier profiles
-    const vendors = await Vendor.find({}).sort({ createdAt: -1 });
+    // 4. Find all vendors to populate the vendor list
+    const vendors = await Vendor.find().select("-password");
+
+    // 5. Find quotations for these RFQs
+    const rfqIds = rfqs.map(r => r._id);
+    const quotations = await Quotation.find({ rfqId: { $in: rfqIds } })
+      .populate("vendorId", "name email contactNo")
+      .populate("rfqId", "title")
+      .sort({ createdAt: -1 });
 
     const companyResponse = company.toObject();
     if (companyResponse.password) delete companyResponse.password;
@@ -42,7 +65,8 @@ export const getCompanyDashboard = async (req, res) => {
       success: true,
       company: companyResponse,
       rfqs: rfqs,
-      vendors: vendors
+      vendors: vendors,
+      quotations: quotations
     });
 
   } catch (error) {

@@ -9,7 +9,7 @@ export const searchVendors = createAsyncThunk(
   async (query, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${BASE}/vendors/search?q=${encodeURIComponent(query)}`, {
+      const res = await axios.get(`${BASE}/auth/vendors/search?q=${encodeURIComponent(query)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });
@@ -26,7 +26,7 @@ export const submitRFQ = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${BASE}/rfq/create`, payload, {
+      const res = await axios.post(`${BASE}/auth/rfq`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });
@@ -43,7 +43,7 @@ export const saveDraftRFQ = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${BASE}/rfq/draft`, payload, {
+      const res = await axios.post(`${BASE}/auth/rfq`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });

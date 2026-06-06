@@ -39,7 +39,6 @@ const vendorSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
     },
   },
   {
