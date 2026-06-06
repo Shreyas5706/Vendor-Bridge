@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const companySchema = new mongoose.Schema(
+const vendorSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -8,34 +8,11 @@ const companySchema = new mongoose.Schema(
       trim: true,
     },
 
-    description: {
-      type: String,
-      trim: true,
-    },
-
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
-    },
-
-    password: {
-      type: String,
-      required: true,
-    },
-
-    PO: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "PurchaseOfficer",
-      },
-    ],
-
-    manager: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Manager",
     },
 
     contactNo: {
@@ -48,6 +25,14 @@ const companySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    description:{
+        type: String,
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE"],
+      default: "ACTIVE",
+    },
     role:{
         type:String,
         enum:["PO","COMPANY","MANAGER","VENDOR","ADMIN"]
@@ -58,7 +43,7 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-const Company =
-  mongoose.models.Company || mongoose.model("Company", companySchema);
+const Vendor =
+  mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
 
-export default Company;
+export default Vendor;
