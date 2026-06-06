@@ -45,6 +45,125 @@ export default function CleanLandingPage() {
   {/* Main Blue Glow Behind Dashboard */}
   <div className="absolute top-[6%] right-[10%] w-[650px] h-[650px] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
+    {/* Premium Vendor Bridge Background */}
+<div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
+
+  <svg
+    viewBox="0 0 1400 700"
+    className="absolute top-[5%] left-[-8%] w-[120%] h-auto opacity-[0.28]"
+    fill="none"
+  >
+    {/* Left Tower */}
+    <rect
+      x="420"
+      y="120"
+      width="20"
+      height="340"
+      rx="4"
+      fill="#64748B"
+      opacity="0.8"
+    />
+
+    {/* Right Tower */}
+    <rect
+      x="930"
+      y="120"
+      width="20"
+      height="340"
+      rx="4"
+      fill="#64748B"
+      opacity="0.8"
+    />
+
+    {/* Main Cable */}
+    <path
+      d="
+        M120 340
+        Q 280 120 430 145
+        Q 700 90 940 145
+        Q 1100 120 1280 340
+      "
+      stroke="#475569"
+      strokeWidth="4"
+      strokeLinecap="round"
+      opacity="0.9"
+    />
+
+    {/* Secondary Cable */}
+    <path
+      d="
+        M140 360
+        Q 300 150 430 170
+        Q 700 120 940 170
+        Q 1100 150 1260 360
+      "
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+
+    {/* Hanging Cables */}
+    {[
+      470,510,550,590,630,670,710,750,790,830,870
+    ].map((x, i) => (
+      <line
+        key={i}
+        x1={x}
+        y1="160"
+        x2={x}
+        y2="340"
+        stroke="#64748B"
+        strokeWidth="2"
+        opacity="0.75"
+      />
+    ))}
+
+    {/* Bridge Road */}
+    <line
+      x1="130"
+      y1="340"
+      x2="1270"
+      y2="340"
+      stroke="#475569"
+      strokeWidth="7"
+      strokeLinecap="round"
+      opacity="0.9"
+    />
+
+    {/* Bottom Structural Arc */}
+    <path
+      d="
+        M250 340
+        Q 700 600 1150 340
+      "
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.65"
+    />
+
+    {/* Side Support Lines */}
+    <line
+      x1="430"
+      y1="145"
+      x2="430"
+      y2="340"
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+
+    <line
+      x1="940"
+      y1="145"
+      x2="940"
+      y2="340"
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+  </svg>
+</div>
+
   {/* Top Right Curved Line Pattern */}
   <div className="absolute top-0 right-0 w-[65%] h-[55%] opacity-[0.2] pointer-events-none z-0">
     <svg
@@ -248,11 +367,13 @@ export default function CleanLandingPage() {
               { step: "07", title: "Direct Routing", desc: "Invoices print instantly or dispatch to vendor interfaces via internal email wire.", icon: "✉️" },
               { step: "08", title: "View Ledger", desc: "Every operation archives cleanly within dynamic analytical dashboards.", icon: "📈" }
             ].map((node, i) => (
-              <div key={i} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 
-  hover:bg-white 
-  hover:border-slate-500 
-  hover:shadow-lg hover:shadow-slate-100 
-  transition-all duration-300">
+              <div key={i} className="group bg-slate-50/50 border border-slate-500/60 rounded-xl p-6
+                hover:bg-white
+                hover:border-blue-600
+                hover:ring-1 hover:ring-blue-200
+                hover:shadow-xl
+                hover:-translate-y-2
+                transition-all duration-300 ease-out">
                 
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">STEP {node.step}</span>
@@ -300,13 +421,13 @@ export default function CleanLandingPage() {
             { title: "3-Way Match Invoicing", desc: "Cross-checks corresponding Purchase Orders, Goods Received Notes, and Incoming Supplier Billing slips to avoid leakage.", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
             { title: "Immutable Trail Ledgers", desc: "Every state mutation, signature authorization, and system dispatch logs instantly onto an auditable sequence view.", icon: "M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" }
           ].map((item, idx) => (
-            <div key={idx} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6
-  hover:bg-white
-  hover:border-blue-600
-  hover:ring-1 hover:ring-blue-200
-  hover:shadow-xl
-  hover:-translate-y-2
-  transition-all duration-300 ease-out">
+            <div key={idx} className="bg-slate-50/50 border border-slate-400/60 rounded-xl p-6
+              hover:bg-white
+              hover:border-blue-600
+              hover:ring-1 hover:ring-blue-200
+              hover:shadow-xl
+              hover:-translate-y-2
+              transition-all duration-300 ease-out">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-700 mb-4 shadow-xs">
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
