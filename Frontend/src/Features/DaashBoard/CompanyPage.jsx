@@ -1,13 +1,19 @@
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { logoutUser } from '../auth/auth.slice'
+import BridgeLoader from '../../components/BridgeLoader'
 
 const CompanyPage = () => {
-  const { user } = useSelector((state) => state.auth)
+  const { user, loading } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
 
   const handleLogout = () => {
     dispatch(logoutUser())
+  }
+
+  // Show cinematic loader while logout API call is in progress
+  if (loading) {
+    return <BridgeLoader fullscreen message="Signing Out…" />;
   }
 
   return (
@@ -20,8 +26,13 @@ const CompanyPage = () => {
           </div>
           <button 
             onClick={handleLogout}
-            className="px-5 py-2.5 rounded-xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-colors flex items-center gap-2"
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
             Sign Out
           </button>
         </div>

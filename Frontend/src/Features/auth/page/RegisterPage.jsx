@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import BridgeLoader from '../../../components/BridgeLoader';
+import BridgeIcon from '../../../assets/Bridge.png';
 import {
   sendOTP,
   findCompanyByEmail,
@@ -247,7 +249,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-base">V</div>
+            <img src={BridgeIcon} alt="VendorBridge Logo" className="h-9 w-auto object-contain" />
             <div>
               <p className="text-base font-black tracking-tight text-slate-900">Vendor<span className="text-blue-600">Bridge</span></p>
               <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold -mt-0.5">Procurement ERP</p>
@@ -398,9 +400,19 @@ export default function RegisterPage() {
                         type="button"
                         onClick={handleFindCompany}
                         disabled={loading}
-                        className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 disabled:bg-slate-300 transition whitespace-nowrap"
+                        className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 disabled:bg-slate-700 transition whitespace-nowrap flex items-center gap-1.5"
                       >
-                        {loading ? '…' : 'Find'}
+                        {loading ? (
+                          <span className="bridge-btn-spinner">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1" />
+                              <line x1="12" y1="5" x2="12" y2="10" />
+                              <path d="M6 10 Q12 5 18 10" />
+                              <line x1="6" y1="10" x2="6" y2="15" />
+                              <line x1="18" y1="10" x2="18" y2="15" />
+                            </svg>
+                          </span>
+                        ) : 'Find'}
                       </button>
                     </div>
 
@@ -449,9 +461,20 @@ export default function RegisterPage() {
                         type="button"
                         onClick={handleSendOTP}
                         disabled={loading || !company || otpSent}
-                        className={`w-full py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed ${accent.bg} hover:opacity-90 shadow-sm`}
+                        className={`w-full py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed ${accent.bg} hover:opacity-90 shadow-sm flex items-center justify-center gap-2`}
                       >
-                        {loading ? 'Sending…' : otpSent ? '✓ OTP Sent' : 'Send OTP to Company Email'}
+                        {loading ? (
+                          <span className="bridge-btn-spinner">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1" />
+                              <line x1="12" y1="5" x2="12" y2="10" />
+                              <path d="M6 10 Q12 5 18 10" />
+                              <line x1="6" y1="10" x2="6" y2="15" />
+                              <line x1="18" y1="10" x2="18" y2="15" />
+                            </svg>
+                            Sending OTP…
+                          </span>
+                        ) : otpSent ? '✓ OTP Sent' : 'Send OTP to Company Email'}
                       </button>
 
                       {otpSent && (
@@ -541,9 +564,20 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => { dispatch(clearRegisterError()); dispatch(sendOTP(otpTargetEmail)); }}
                     disabled={loading}
-                    className="text-xs text-slate-400 hover:text-slate-700 font-semibold underline disabled:opacity-40"
+                    className="text-xs text-slate-400 hover:text-slate-700 font-semibold underline disabled:opacity-40 flex items-center gap-1.5 mx-auto"
                   >
-                    {loading ? 'Resending…' : "Didn't receive it? Resend"}
+                    {loading ? (
+                      <span className="bridge-btn-spinner">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1" />
+                          <line x1="12" y1="5" x2="12" y2="10" />
+                          <path d="M6 10 Q12 5 18 10" />
+                          <line x1="6" y1="10" x2="6" y2="15" />
+                          <line x1="18" y1="10" x2="18" y2="15" />
+                        </svg>
+                        Resending…
+                      </span>
+                    ) : "Didn't receive it? Resend"}
                   </button>
                 </div>
 
@@ -682,16 +716,19 @@ export default function RegisterPage() {
                       id="submit-register-btn"
                       type="submit"
                       disabled={loading}
-                      className={`flex-1 py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${accent.bg} hover:opacity-90 shadow-sm flex items-center justify-center gap-2`}
+                      className={`flex-1 py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${accent.bg} hover:opacity-90 shadow-sm flex items-center justify-center gap-2`}
                     >
                       {loading ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        <span className="bridge-btn-spinner">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1" />
+                            <line x1="12" y1="5" x2="12" y2="10" />
+                            <path d="M6 10 Q12 5 18 10" />
+                            <line x1="6" y1="10" x2="6" y2="15" />
+                            <line x1="18" y1="10" x2="18" y2="15" />
                           </svg>
                           Creating Account…
-                        </>
+                        </span>
                       ) : 'Create Account →'}
                     </button>
                   </div>

@@ -4,6 +4,7 @@ import Dashboard    from "../Features/DaashBoard/DashBoard";
 import LoginPage    from "../Features/auth/page/LoginPage";
 import RegisterPage from "../Features/auth/page/RegisterPage";
 import CompanyPage  from "../Features/DaashBoard/CompanyPage";
+import BridgeLoader from "../components/BridgeLoader";
 
 // A simple PrivateRoute wrapper to check if user exists
 function PrivateRoute({ children }) {
@@ -49,5 +50,5 @@ export const router = createBrowserRouter([
             <CompanyPage />
           </PrivateRoute>
         ),
-    },
+    }
 ]);

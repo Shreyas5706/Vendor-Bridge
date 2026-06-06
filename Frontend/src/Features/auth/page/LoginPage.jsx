@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { loginUser, clearAuthError } from "../auth.slice"
+import { loginUser, clearAuthError } from "../auth.slice";
 import { useNavigate } from 'react-router-dom';
+import BridgeLoader from '../../../components/BridgeLoader';
+import BridgeIcon from '../../../assets/Bridge.png';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -38,9 +40,7 @@ export default function LoginPage() {
           <div className="relative space-y-12">
             {/* Top Brand Identity */}
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg tracking-tighter">
-                V
-              </div>
+              <img src={BridgeIcon} alt="VendorBridge Logo" className="h-10 w-auto object-contain" />
               <div>
                 <h1 className="text-xl font-black tracking-tight text-slate-900">
                   Vendor<span className="text-blue-600">Bridge</span>
@@ -160,15 +160,19 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <span className="bridge-btn-spinner">
+                    {/* Mini bridge icon spinner */}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1" />
+                      <line x1="12" y1="5" x2="12" y2="10" />
+                      <path d="M6 10 Q12 5 18 10" />
+                      <line x1="6" y1="10" x2="6" y2="15" />
+                      <line x1="18" y1="10" x2="18" y2="15" />
                     </svg>
-                    Verifying Tokens...
+                    Verifying Credentials…
                   </span>
                 ) : (
                   "Sign In to Secured Console →"

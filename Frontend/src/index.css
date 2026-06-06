@@ -1,2 +1,161 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════
+   BRIDGE LOADER — Cinematic loading animation styles
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Fullscreen overlay */
+.bridge-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #0d1f3c 0%, #060e1a 100%);
+  animation: bridge-overlay-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes bridge-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Card container */
+.bridge-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: bridge-card-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+@keyframes bridge-card-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* SVG itself */
+.bridge-svg {
+  display: block;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.2),
+    0 8px 48px rgba(37, 99, 235, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: bridge-svg-pulse 3s ease-in-out infinite;
+}
+
+@keyframes bridge-svg-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 8px 48px rgba(37,99,235,0.35), 0 2px 8px rgba(0,0,0,0.6); }
+  50%       { box-shadow: 0 0 0 1px rgba(96,165,250,0.4), 0 8px 64px rgba(37,99,235,0.55), 0 2px 8px rgba(0,0,0,0.6); }
+}
+
+/* Brand word-mark */
+.bridge-loader-brand {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  animation: bridge-brand-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+@keyframes bridge-brand-in {
+  from { opacity: 0; letter-spacing: 0.3em; }
+  to   { opacity: 1; letter-spacing: normal; }
+}
+
+.bridge-loader-brand-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  margin-right: 6px;
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.5));
+  animation: bridge-icon-glow 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes bridge-icon-glow {
+  from { filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)); }
+  to   { filter: drop-shadow(0 0 14px rgba(96, 165, 250, 0.75)); }
+}
+
+.bridge-loader-brand-vendor {
+  font-size: 20px;
+  font-weight: 900;
+  color: #f1f5f9;
+  font-family: system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.bridge-loader-brand-bridge {
+  font-size: 20px;
+  font-weight: 900;
+  color: #3b82f6;
+  font-family: system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Sub-message text */
+.bridge-loader-message {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #60a5fa;
+  opacity: 0.75;
+  font-family: 'Courier New', monospace;
+  animation: bridge-msg-fade 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes bridge-msg-fade {
+  from { opacity: 0.5; }
+  to   { opacity: 0.9; }
+}
+
+/* Bouncing dots */
+.bridge-loader-dots {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.bridge-loader-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: bridge-dot-bounce 1.1s ease-in-out infinite;
+}
+
+@keyframes bridge-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1.2); opacity: 1;   }
+}
+
+/* ── Inline / embedded variant ──────────────────────────────────── */
+.bridge-loader-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.bridge-loader-inline--sm .bridge-svg { transform: scale(0.55); transform-origin: center; }
+.bridge-loader-inline--md .bridge-svg { transform: scale(0.75); transform-origin: center; }
+.bridge-loader-inline--lg .bridge-svg { transform: scale(0.95); transform-origin: center; }
+
+/* ── Button inline spinner variant ─────────────────────────────── */
+.bridge-btn-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bridge-btn-spinner svg {
+  animation: bridge-spin 0.9s linear infinite;
+}
+
+@keyframes bridge-spin {
+  to { transform: rotate(360deg); }
+}
+

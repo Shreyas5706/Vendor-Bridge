@@ -3,6 +3,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./app.routes"
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '../Features/auth/auth.slice';
+import BridgeLoader from '../components/BridgeLoader';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -12,12 +13,9 @@ const App = () => {
     dispatch(checkAuth());
   }, [dispatch]);
 
+  // Show the cinematic bridge loader while checking session auth
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <BridgeLoader fullscreen message="Verifying Session…" />;
   }
 
   return (
