@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../auth/auth.slice';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
+import BridgeLoader from '../../components/BridgeLoader';
 
 const VendorPage = () => {
   const { user } = useSelector((state) => state.auth);
@@ -96,14 +97,7 @@ const VendorPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-slate-900">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="text-slate-500 font-mono text-xs uppercase tracking-widest">Initialising Vendor Console...</p>
-        </div>
-      </div>
-    );
+    return <BridgeLoader fullscreen message="Initialising Vendor Console..." />;
   }
 
   if (error) {
@@ -325,7 +319,7 @@ const VendorPage = () => {
                         <p className="text-[10px] text-slate-500 font-mono uppercase">Qty: {item.quantity} {item.unit}</p>
                       </div>
                       <div className="w-1/3">
-                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Price per Unit ($)</label>
+                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Price per Unit (₹)</label>
                         <input 
                           type="number"
                           min="0"
@@ -338,7 +332,7 @@ const VendorPage = () => {
                         />
                       </div>
                       <div className="w-1/4 text-right">
-                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Total ($)</label>
+                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Total (₹)</label>
                         <p className="font-mono font-bold text-blue-600">
                           {((Number(quoteItems[item.productName]) || 0) * item.quantity).toFixed(2)}
                         </p>
@@ -361,7 +355,7 @@ const VendorPage = () => {
               <div className="bg-slate-50 border border-slate-200 p-4 rounded text-right flex justify-between items-center">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Grand Total:</span>
                 <span className="text-2xl font-black font-mono text-slate-900">
-                  ${selectedRfq.items?.reduce((sum, item) => sum + ((Number(quoteItems[item.productName]) || 0) * item.quantity), 0).toFixed(2)}
+                  ₹{selectedRfq.items?.reduce((sum, item) => sum + ((Number(quoteItems[item.productName]) || 0) * item.quantity), 0).toFixed(2)}
                 </span>
               </div>
 

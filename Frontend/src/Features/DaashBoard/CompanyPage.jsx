@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import BridgeLoader from '../../components/BridgeLoader';
 import BridgeIcon from '../../assets/Bridge.png';
 import Sidebar from '../../components/Sidebar';
@@ -325,14 +326,7 @@ const CompanyPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-slate-900">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="text-slate-500 font-mono text-xs uppercase tracking-widest">Initialising VendorBridge Console...</p>
-        </div>
-      </div>
-    );
+    return <BridgeLoader fullscreen message="Initialising VendorBridge Console..." />;
   }
 
   if (error) {
@@ -379,6 +373,56 @@ const CompanyPage = () => {
     return matchesSearch;
   }) || [];
 
+  // -------------------------------------------------------------
+  // DASHBOARD CALCULATIONS
+  // -------------------------------------------------------------
+  const activeRfqsCount = rfqs?.filter(r => r.status === 'ACTIVE').length || 0;
+  const pendingQuotationsCount = quotations?.filter(q => q.status === 'PENDING').length || 0;
+  
+  // Helper for Indian Currency Formatting (e.g. ₹2.3L, ₹1.5Cr)
+  const formatIndianCurrency = (amount) => {
+    if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)}Cr`;
+    if (amount >= 100000) return `₹${(amount / 100000).toFixed(2)}L`;
+    if (amount >= 1000) return `₹${(amount / 1000).toFixed(1)}k`;
+    return `₹${amount.toFixed(0)}`;
+  };
+
+  // Total Spend = Sum of all approved Purchase Orders
+  const totalSpend = pos?.reduce((sum, po) => sum + (po.grandTotal || 0), 0) || 0;
+  const formattedSpend = formatIndianCurrency(totalSpend);
+
+  // Generate Chart Data for Last 4 Months based on POs (Manager Approvals)
+  const last4Months = Array.from({length: 4}, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (3 - i));
+    return d.toLocaleString('default', { month: 'short' });
+  });
+
+  const spendByMonth = {};
+  pos?.forEach(po => {
+    const d = new Date(po.createdAt);
+    const month = d.toLocaleString('default', { month: 'short' });
+    spendByMonth[month] = (spendByMonth[month] || 0) + (po.grandTotal || 0);
+  });
+
+  const maxSpend = Math.max(...last4Months.map(m => spendByMonth[m] || 0), 100); 
+  const chartData = last4Months.map(month => {
+    const amount = spendByMonth[month] || 0;
+    return { month, amountRaw: amount, formattedAmount: formatIndianCurrency(amount) };
+  });
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900 text-white text-[10px] p-2 rounded shadow-xl border border-slate-700">
+          <p className="font-bold uppercase tracking-wider mb-1">{label}</p>
+          <p className="text-blue-400 font-mono text-sm">{payload[0].payload.formattedAmount}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans selection:bg-blue-50 selection:text-blue-600">
       
@@ -420,25 +464,18 @@ const CompanyPage = () => {
               </div>
 
               {/* KPI metrics row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="bg-white border border-slate-200 p-5 rounded space-y-2">
                   <span className="text-[10px] text-slate-500 font-black block uppercase tracking-wider">Active RFQ's</span>
-                  <span className="text-3xl font-black font-mono text-slate-900">{rfqs?.filter(r=>r.status==='ACTIVE').length || 0}</span>
+                  <span className="text-3xl font-black font-mono text-slate-900">{activeRfqsCount}</span>
                 </div>
                 <div className="bg-white border border-slate-200 p-5 rounded space-y-2">
                   <span className="text-[10px] text-slate-500 font-black block uppercase tracking-wider">Pending Approvals</span>
-                  <span className="text-3xl font-black font-mono text-blue-600">5</span>
+                  <span className="text-3xl font-black font-mono text-blue-600">{pendingQuotationsCount}</span>
                 </div>
                 <div className="bg-white border border-slate-200 p-5 rounded space-y-2 relative group cursor-help">
-                  <span className="text-[10px] text-slate-500 font-black block uppercase tracking-wider">Total spend</span>
-                  <span className="text-3xl font-black font-mono text-slate-900">2.3L</span>
-                  <div className="absolute top-2 right-2 bg-blue-50 text-blue-600 border border-blue-200 text-[8px] font-bold px-1.5 rounded uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                    Hovered: Nidhi
-                  </div>
-                </div>
-                <div className="bg-white border border-slate-200 p-5 rounded space-y-2">
-                  <span className="text-[10px] text-slate-500 font-black block uppercase tracking-wider">Monthly savings</span>
-                  <span className="text-3xl font-black font-mono text-slate-900">3</span>
+                  <span className="text-[10px] text-slate-500 font-black block uppercase tracking-wider">Total spend (Approved)</span>
+                  <span className="text-3xl font-black font-mono text-slate-900">{formattedSpend}</span>
                 </div>
               </div>
 
@@ -448,7 +485,7 @@ const CompanyPage = () => {
                 {/* Recent Purchase Orders Table */}
                 <div className="lg:col-span-8 bg-white border border-slate-200 rounded p-5 space-y-4">
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Recent Purchase Orders
+                    Recent Purchase Orders (Accepted By Manager)
                   </h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
@@ -465,7 +502,9 @@ const CompanyPage = () => {
                           <tr key={i} className="hover:bg-slate-100/30 transition-colors">
                             <td className="py-3 font-mono font-bold text-slate-600">{po.poNumber}</td>
                             <td className="py-3 text-slate-500">{po.vendorId?.name || 'Unknown Vendor'}</td>
-                            <td className="py-3 font-mono text-slate-600">${po.grandTotal?.toFixed(2)}</td>
+                            <td className="py-3 font-mono text-slate-600">
+                              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(po.grandTotal || 0)}
+                            </td>
                             <td className="py-3 text-right">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
                                 po.status === 'ISSUED' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
@@ -487,32 +526,41 @@ const CompanyPage = () => {
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
                     Spending Trends (Last 4 Months)
                   </h4>
-                  
-                  {/* Custom SVG/CSS Bar Graph representation */}
-                  <div className="space-y-4 pt-4">
-                    <div className="flex items-end justify-between h-32 px-4 border-b border-slate-200">
-                      {[
-                        { month: 'Mar', val: '40%', amount: '₹1.2L' },
-                        { month: 'Apr', val: '75%', amount: '₹2.3L' },
-                        { month: 'May', val: '60%', amount: '₹1.8L' },
-                        { month: 'Jun', val: '90%', amount: '₹2.7L' }
-                      ].map((item, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 w-10 group relative">
-                          <span className="text-[8px] font-mono text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 bg-slate-100 px-1 border border-slate-300 rounded whitespace-nowrap z-10">
-                            {item.amount}
-                          </span>
-                          <div 
-                            style={{ height: item.val }} 
-                            className="w-full bg-blue-600/80 group-hover:bg-blue-600 rounded-t transition-all duration-300"
-                          />
-                          <span className="text-[9px] font-bold text-slate-500 mt-1">{item.month}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-[10px] text-slate-500 flex justify-between px-2 font-mono">
-                      <span>Min: 1.2L</span>
-                      <span>Max: 2.7L</span>
-                    </div>
+                  {/* Recharts Area Graph representation */}
+                  <div className="h-40 pt-4 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis 
+                          dataKey="month" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} 
+                          dy={10}
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#94a3b8', fontSize: 9, fontFamily: 'monospace' }}
+                          tickFormatter={(val) => val === 0 ? '₹0' : formatIndianCurrency(val)}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                        <Area 
+                          type="monotone" 
+                          dataKey="amountRaw" 
+                          stroke="#2563eb" 
+                          strokeWidth={3}
+                          fillOpacity={1} 
+                          fill="url(#colorSpend)" 
+                          animationDuration={1500}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
@@ -529,12 +577,7 @@ const CompanyPage = () => {
                 >
                   Create RFQ's
                 </button>
-                <button 
-                  onClick={() => setShowAddVendor(true)}
-                  className="px-5 py-2.5 rounded bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
-                >
-                  Add Vendor
-                </button>
+                  
                 <button 
                   onClick={() => setCurrentView('invoices')}
                   className="px-5 py-2.5 rounded bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
@@ -556,12 +599,7 @@ const CompanyPage = () => {
                   <h3 className="text-2xl font-black text-slate-900">Vendors</h3>
                   <p className="text-slate-500 text-xs mt-1">Manage supplier profiles and registrations</p>
                 </div>
-                <button
-                  onClick={() => setShowAddVendor(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider rounded transition-colors cursor-pointer"
-                >
-                  + Add Vendor
-                </button>
+                
               </div>
 
               {/* Search input */}
@@ -1061,7 +1099,7 @@ const CompanyPage = () => {
                           <tr key={i} className="hover:bg-slate-50/50">
                             <td className="py-4 px-4 font-bold text-slate-700">{q.rfqId?.title || 'Unknown RFQ'}</td>
                             <td className="py-4 px-4 text-slate-600">{q.vendorId?.name || 'Unknown Vendor'}</td>
-                            <td className="py-4 px-4 font-mono font-bold text-blue-600">${q.totalAmount?.toFixed(2)}</td>
+                            <td className="py-4 px-4 font-mono font-bold text-blue-600">₹{q.totalAmount?.toFixed(2)}</td>
                             <td className="py-4 px-4 text-slate-500 max-w-[200px] truncate">{q.deliveryNotes || '-'}</td>
                             <td className="py-4 px-4 text-slate-500 font-mono">{new Date(q.createdAt).toLocaleDateString()}</td>
                             <td className="py-4 px-4 text-right flex items-center justify-end gap-2">
@@ -1134,7 +1172,7 @@ const CompanyPage = () => {
                           <tr key={i} className="hover:bg-slate-50/50">
                             <td className="py-4 px-4 font-bold text-slate-700">{q.rfqId?.title || 'Unknown RFQ'}</td>
                             <td className="py-4 px-4 text-slate-600">{q.vendorId?.name || 'Unknown Vendor'}</td>
-                            <td className="py-4 px-4 font-mono font-bold text-blue-600">${q.totalAmount?.toFixed(2)}</td>
+                            <td className="py-4 px-4 font-mono font-bold text-blue-600">₹{q.totalAmount?.toFixed(2)}</td>
                             <td className="py-4 px-4 text-slate-500 max-w-[200px] truncate">{q.deliveryNotes || '-'}</td>
                             <td className="py-4 px-4 text-slate-500 font-mono">{new Date(q.createdAt).toLocaleDateString()}</td>
                             <td className="py-4 px-4 text-right">
@@ -1196,7 +1234,7 @@ const CompanyPage = () => {
                           <tr key={i} className="hover:bg-slate-100/30 transition-colors">
                             <td className="py-3.5 px-5 font-mono font-bold text-slate-700">{po.poNumber}</td>
                             <td className="py-3.5 px-5 text-slate-600">{po.vendorId?.name || 'Unknown'}</td>
-                            <td className="py-3.5 px-5 font-mono text-slate-600">${po.grandTotal?.toFixed(2)}</td>
+                            <td className="py-3.5 px-5 font-mono text-slate-600">₹{po.grandTotal?.toFixed(2)}</td>
                             <td className="py-3.5 px-5 text-slate-500 font-mono">{new Date(po.createdAt).toLocaleDateString()}</td>
                             <td className="py-3.5 px-5">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
@@ -1261,7 +1299,7 @@ const CompanyPage = () => {
                         {invoices && invoices.length > 0 ? invoices.map((inv, i) => (
                           <tr key={i} className="hover:bg-slate-100/30 transition-colors">
                             <td className="py-3.5 px-5 font-mono font-bold text-slate-700">{inv.invoiceNumber}</td>
-                            <td className="py-3.5 px-5 font-mono text-slate-600">${inv.amount?.toFixed(2)}</td>
+                            <td className="py-3.5 px-5 font-mono text-slate-600">₹{inv.amount?.toFixed(2)}</td>
                             <td className="py-3.5 px-5 text-slate-500 font-mono">{new Date(inv.dueDate).toLocaleDateString()}</td>
                             <td className="py-3.5 px-5">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${
@@ -1336,8 +1374,8 @@ const CompanyPage = () => {
                             <tr key={idx} className="border-b border-[#e2e8f0] text-sm">
                               <td className="p-3">{item.productName}</td>
                               <td className="p-3 text-center">{item.quantity} {item.unit}</td>
-                              <td className="p-3 text-right font-mono">${item.unitPrice?.toFixed(2)}</td>
-                              <td className="p-3 text-right font-mono font-bold">${item.total?.toFixed(2)}</td>
+                              <td className="p-3 text-right font-mono">₹{item.unitPrice?.toFixed(2)}</td>
+                              <td className="p-3 text-right font-mono font-bold">₹{item.total?.toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1347,15 +1385,15 @@ const CompanyPage = () => {
                         <div className="w-1/2">
                           <div className="flex justify-between p-2 border-b border-[#e2e8f0] text-sm">
                             <span className="font-bold text-[#64748b]">Subtotal:</span>
-                            <span className="font-mono">${relatedPO?.subTotal?.toFixed(2)}</span>
+                            <span className="font-mono">₹{relatedPO?.subTotal?.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between p-2 border-b border-[#e2e8f0] text-sm">
                             <span className="font-bold text-[#64748b]">Tax ({relatedPO?.taxPercent}% GST):</span>
-                            <span className="font-mono">${relatedPO?.taxAmount?.toFixed(2)}</span>
+                            <span className="font-mono">₹{relatedPO?.taxAmount?.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between p-3 mt-2 rounded bg-[#eff6ff] text-[#1e3a8a] border-2 border-[#bfdbfe]">
                             <span className="font-black uppercase tracking-widest">Grand Total:</span>
-                            <span className="font-black font-mono text-xl">${inv.amount?.toFixed(2)}</span>
+                            <span className="font-black font-mono text-xl">₹{inv.amount?.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -1374,150 +1412,36 @@ const CompanyPage = () => {
           {/* ======================================================== */}
           {/* VIEW: REPORTS */}
           {/* ======================================================== */}
-          {currentView === 'reports' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900">Reports & Analytics</h3>
-                <p className="text-slate-500 text-xs mt-1">Provide procurement insights, spend summaries, and trends</p>
-              </div>
-
-              {/* Analytics panels */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Spending Summary */}
-                <div className="bg-white border border-slate-200 p-5 rounded space-y-4">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Spending Summaries (by Category)
-                  </h4>
-                  
-                  <div className="space-y-3 pt-2">
-                    {[
-                      { name: 'Office Furniture', amount: '₹1.85L', pct: '70%', color: 'bg-blue-600' },
-                      { name: 'IT Infrastructure', amount: '₹0.50L', pct: '20%', color: 'bg-blue-500' },
-                      { name: 'Office Supplies', amount: '₹0.20L', pct: '10%', color: 'bg-indigo-500' }
-                    ].map((row, i) => (
-                      <div key={i} className="space-y-1">
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-slate-600">{row.name}</span>
-                          <span className="text-slate-500">{row.amount} ({row.pct})</span>
-                        </div>
-                        <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden border border-slate-850">
-                          <div style={{ width: row.pct }} className={`h-full ${row.color}`} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Vendor Grading Analysis */}
-                <div className="bg-white border border-slate-200 p-5 rounded space-y-4">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Vendor Performance Matrix
-                  </h4>
-                  
-                  <div className="space-y-3 pt-2">
-                    {[
-                      { name: 'Infra Supplies Pvt Ltd', grade: '4.6 / 5', label: 'EXCELLENT', color: 'text-blue-600' },
-                      { name: 'TechServ Ltd', grade: '4.2 / 5', label: 'GOOD', color: 'text-blue-400' },
-                      { name: 'Office Wood Co', grade: '4.8 / 5', label: 'EXCELLENT', color: 'text-blue-600' }
-                    ].map((row, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded border border-slate-850">
-                        <span className="font-bold text-slate-600">{row.name}</span>
-                        <div className="text-right">
-                          <span className="font-mono font-bold text-slate-900 block">{row.grade}</span>
-                          <span className={`text-[8px] font-black uppercase tracking-wider ${row.color}`}>{row.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* VIEW: ACTIVITY & STAFF (Auditing & Team) */}
-          {/* ======================================================== */}
-          {currentView === 'activity' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              
-              {/* Activity Audit Timeline */}
-              <div className="lg:col-span-7 bg-white border border-slate-200 rounded p-6 space-y-6">
-                <div>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Activity Logs & Audit Timeline
-                  </h4>
-                </div>
-
-                <div className="space-y-6 pt-2">
-                  {activityLogs.map((log, idx) => (
-                    <div key={idx} className="flex gap-4 items-start relative">
-                      {idx < activityLogs.length - 1 && (
-                        <div className="absolute left-3 top-5 bottom-[-24px] w-0.5 bg-slate-100" />
-                      )}
-                      <div className="w-6.5 h-6.5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-[10px] text-blue-600 font-bold shrink-0 mt-0.5">
-                        {log.actor.charAt(0)}
-                      </div>
-                      <div className="text-xs space-y-0.5">
-                        <p className="text-slate-600 font-semibold">{log.message}</p>
-                        <span className="text-[10px] text-slate-500 font-mono block">{log.time}</span>
-                      </div>
-                    </div>
-                  ))}
+          {(currentView === 'reports' || currentView === 'activity') && (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
+              {/* Animated Icon Cluster */}
+              <div className="relative flex items-center justify-center w-32 h-32">
+                {/* Outer spinning dashed ring */}
+                <div className="absolute inset-0 border-[3px] border-blue-200 border-dashed rounded-full animate-spin [animation-duration:4s]" />
+                {/* Inner spinning dotted ring */}
+                <div className="absolute inset-3 border-[3px] border-blue-400 border-dotted rounded-full animate-spin [animation-duration:6s] [animation-direction:reverse]" />
+                {/* Center glowing diamond */}
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl rotate-45 animate-pulse flex items-center justify-center shadow-2xl shadow-blue-500/50">
+                  <div className="w-6 h-6 bg-white/30 rounded-md" />
                 </div>
               </div>
 
-              {/* Corporate Staff List (Manager & POs) */}
-              <div className="lg:col-span-5 space-y-6">
-                
-                {/* Manager */}
-                <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Company Manager
-                  </h4>
-                  {company?.manager ? (
-                    <div className="text-xs space-y-3">
-                      <div>
-                        <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Full Name</span>
-                        <p className="font-bold text-slate-700 text-sm">{company.manager.name}</p>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Email Address</span>
-                        <p className="font-mono text-slate-500 font-semibold break-all">{company.manager.email}</p>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Contact Number</span>
-                        <p className="font-semibold text-slate-600">{company.manager.contactNo || 'N/A'}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic py-4">No Appointed Manager.</p>
-                  )}
-                </div>
-
-                {/* PO List */}
-                <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600 pb-2 border-b border-slate-200">
-                    Purchase Officers (PO)
-                  </h4>
-                  {company?.PO && company.PO.length > 0 ? (
-                    <div className="divide-y divide-slate-800 text-xs">
-                      {company.PO.map((po, i) => (
-                        <div key={i} className="py-3 first:pt-0 last:pb-0 space-y-1">
-                          <p className="font-bold text-slate-700">{po.name}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">{po.email}</p>
-                          <p className="text-[10px] text-slate-500">Contact: {po.contactNo || 'N/A'}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic py-4">No Purchase Officers linked.</p>
-                  )}
-                </div>
-
+              {/* Text Content */}
+              <div className="text-center space-y-3">
+                <h3 className="text-4xl font-black tracking-tight">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                    Feature Coming Soon
+                  </span>
+                </h3>
+                <p className="text-xs font-bold text-slate-400 max-w-sm mx-auto uppercase tracking-widest leading-relaxed">
+                  We are actively building this module. <br/> Advanced analytics and real-time audit logs will be available shortly!
+                </p>
               </div>
 
+              {/* Decorative progress bar */}
+              <div className="w-48 h-1.5 bg-slate-200 rounded-full overflow-hidden relative">
+                <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-400 to-indigo-600 rounded-full w-24 animate-[bounce_1.5s_infinite]" style={{ animationDirection: 'alternate' }} />
+              </div>
             </div>
           )}
 
