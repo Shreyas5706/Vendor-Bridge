@@ -1,14 +1,14 @@
 import bcrypt from "bcrypt";
-import Company from "../models/company.model.js";
-import Manager from "../models/manager.model.js";
-import PurchaseOfficer from "../models/po.model.js";
-import Vendor from "../models/vendor.model.js";
-import { generateToken } from "../utils/generateToken.js";
+import Company from "../../models/company.model.js";          // fixed path
+import Manager from "../../models/manager.model.js";          // fixed path
+import PurchaseOfficer from "../../models/po.model.js";       // fixed path
+import Vendor from "../../models/vendor.model.js";            // fixed path
+import { generateToken } from "../../utils/generateToken.js"; // fixed path
 
 /**
- * Basic login controller
- * Takes email and password, checks in Company, Manager, PurchaseOfficer, and Vendor collections.
- * Uses generateToken utility to sign the JWT.
+ * Login controller.
+ * Searches across Company, Manager, PurchaseOfficer, and Vendor collections.
+ * Vendors have no password — their account is validated by active status only.
  */
 export const login = async (req, res) => {
   try {
@@ -24,41 +24,29 @@ export const login = async (req, res) => {
 
     const lowercaseEmail = email.toLowerCase().trim();
 
-    // 2. Find user in Company, Manager, PurchaseOfficer, or Vendor collections
+    // 2. Find user across all collections
     let user = null;
     let roleType = null;
 
-    // Check Company
     user = await Company.findOne({ email: lowercaseEmail });
-    if (user) {
-      roleType = "COMPANY";
-    }
+    if (user) roleType = "COMPANY";
 
-    // Check Manager
     if (!user) {
       user = await Manager.findOne({ email: lowercaseEmail });
-      if (user) {
-        roleType = "MANAGER";
-      }
+      if (user) roleType = "MANAGER";
     }
 
-    // Check PurchaseOfficer
     if (!user) {
       user = await PurchaseOfficer.findOne({ email: lowercaseEmail });
-      if (user) {
-        roleType = "PO";
-      }
+      if (user) roleType = "PO";
     }
 
-    // Check Vendor
     if (!user) {
       user = await Vendor.findOne({ email: lowercaseEmail });
-      if (user) {
-        roleType = "VENDOR";
-      }
+      if (user) roleType = "VENDOR";
     }
 
-    // 3. Handle user not found
+    // 3. User not found
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -66,9 +54,9 @@ export const login = async (req, res) => {
       });
     }
 
-    // 4. Compare passwords
+    // 4. Password / status check
     if (roleType === "VENDOR") {
-      // Since Vendor schema has no password field, we verify the user exists and is active.
+      // Vendors have no password — check account status instead
       if (user.status === "INACTIVE") {
         return res.status(403).json({
           success: false,
@@ -76,7 +64,6 @@ export const login = async (req, res) => {
         });
       }
     } else {
-      // For Company, Manager, and PO, verify password with bcrypt
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(401).json({
@@ -86,24 +73,20 @@ export const login = async (req, res) => {
       }
     }
 
-    // 5. Generate JWT Token using utility
+    // 5. Generate JWT
     const token = generateToken(user);
 
     // 6. Set token in HTTP-only cookie
-    const cookieOptions = {
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches the token expiry of 7d)
-    };
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
-    res.cookie("token", token, cookieOptions);
-
-    // 7. Return user info (excluding password if it exists)
+    // 7. Return sanitised user object
     const userResponse = user.toObject();
-    if (userResponse.password) {
-      delete userResponse.password;
-    }
+    if (userResponse.password) delete userResponse.password;
 
     return res.status(200).json({
       success: true,

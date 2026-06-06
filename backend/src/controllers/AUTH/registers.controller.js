@@ -1,19 +1,24 @@
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
-import Company from "../models/company.model.js";
-import Manager from "../models/manager.model.js";
-import PurchaseOfficer from "../models/po.model.js";
-import Vendor from "../models/vendor.model.js";
+import Company from "../../models/company.model.js";       // fixed path
+import Manager from "../../models/manager.model.js";       // fixed path
+import PurchaseOfficer from "../../models/po.model.js";    // fixed path
+import Vendor from "../../models/vendor.model.js";         // fixed path
+import { generateToken } from "../../utils/generateToken.js";
+import { checkOTP } from "./verifyOTP.js";
 
 /**
- * Controller to handle role-based registration
- * Destructures body, extracts role, validates, hashes passwords, and saves records 
- * according to the respective schema requirements.
+ * Role-based registration controller.
+ * Flow:
+ *   1. Client calls POST /send-otp with { email } → OTP sent to email
+ *   2. Client calls POST /register with { email, otp, role, ...roleFields }
+ *      → OTP is verified inline; on success user is created and JWT is returned.
  */
 export const register = async (req, res) => {
   try {
-    const { role } = req.body;
+    const { role, email, otp } = req.body;
 
+    // --- Guard: role, email, and otp are always required ---
     if (!role) {
       return res.status(400).json({
         success: false,
@@ -21,9 +26,24 @@ export const register = async (req, res) => {
       });
     }
 
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required for registration",
+      });
+    }
+
+    // --- Verify OTP before doing anything else ---
+    const otpResult = await checkOTP(email, otp);
+    if (!otpResult.valid) {
+      return res.status(400).json({
+        success: false,
+        message: otpResult.reason,
+      });
+    }
+
     const normalizedRole = role.toUpperCase().trim();
 
-    // Validate that the role is supported
     const allowedRoles = ["COMPANY", "MANAGER", "PO", "VENDOR"];
     if (!allowedRoles.includes(normalizedRole)) {
       return res.status(400).json({
@@ -32,7 +52,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // Helper to check if email already exists in any collection
+    // Helper to check if email already exists across all collections
     const checkEmailExists = async (email) => {
       const emailLower = email.toLowerCase().trim();
       const [companyExists, managerExists, poExists, vendorExists] = await Promise.all([
@@ -48,9 +68,9 @@ export const register = async (req, res) => {
     // COMPANY REGISTRATION
     // ----------------------------------------------------
     if (normalizedRole === "COMPANY") {
-      const { name, email, password, contactNo, country, description } = req.body;
+      const { name, password, contactNo, country, description } = req.body;
 
-      if (!name || !email || !password || !contactNo || !country) {
+      if (!name || !password || !contactNo || !country) {
         return res.status(400).json({
           success: false,
           message: "Name, email, password, contactNo, and country are required for Company registration",
@@ -68,7 +88,7 @@ export const register = async (req, res) => {
 
       const newCompany = new Company({
         name,
-        email,
+        email: email.toLowerCase().trim(),
         password: hashedPassword,
         contactNo,
         country,
@@ -78,12 +98,14 @@ export const register = async (req, res) => {
 
       await newCompany.save();
 
+      const token = generateToken(newCompany);
       const responseData = newCompany.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
         message: "Company registered successfully",
+        token,
         data: responseData,
       });
     }
@@ -92,9 +114,9 @@ export const register = async (req, res) => {
     // MANAGER REGISTRATION
     // ----------------------------------------------------
     if (normalizedRole === "MANAGER") {
-      const { companyId, name, email, password, contactNo } = req.body;
+      const { companyId, name, password, contactNo } = req.body;
 
-      if (!companyId || !name || !email || !password || !contactNo) {
+      if (!companyId || !name || !password || !contactNo) {
         return res.status(400).json({
           success: false,
           message: "companyId, name, email, password, and contactNo are required for Manager registration",
@@ -108,7 +130,6 @@ export const register = async (req, res) => {
         });
       }
 
-      // Verify Company exists
       const targetCompany = await Company.findById(companyId);
       if (!targetCompany) {
         return res.status(404).json({
@@ -129,7 +150,7 @@ export const register = async (req, res) => {
       const newManager = new Manager({
         companyId,
         name,
-        email,
+        email: email.toLowerCase().trim(),
         password: hashedPassword,
         contactNo,
         role: "MANAGER",
@@ -137,16 +158,17 @@ export const register = async (req, res) => {
 
       await newManager.save();
 
-      // Update Company reference
       targetCompany.manager = newManager._id;
       await targetCompany.save();
 
+      const token = generateToken(newManager);
       const responseData = newManager.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
         message: "Manager registered successfully and linked to Company",
+        token,
         data: responseData,
       });
     }
@@ -155,9 +177,9 @@ export const register = async (req, res) => {
     // PURCHASE OFFICER (PO) REGISTRATION
     // ----------------------------------------------------
     if (normalizedRole === "PO") {
-      const { companyId, name, email, password, contactNo } = req.body;
+      const { companyId, name, password, contactNo } = req.body;
 
-      if (!companyId || !name || !email || !password || !contactNo) {
+      if (!companyId || !name || !password || !contactNo) {
         return res.status(400).json({
           success: false,
           message: "companyId, name, email, password, and contactNo are required for Purchase Officer registration",
@@ -171,7 +193,6 @@ export const register = async (req, res) => {
         });
       }
 
-      // Verify Company exists
       const targetCompany = await Company.findById(companyId);
       if (!targetCompany) {
         return res.status(404).json({
@@ -192,7 +213,7 @@ export const register = async (req, res) => {
       const newPO = new PurchaseOfficer({
         companyId,
         name,
-        email,
+        email: email.toLowerCase().trim(),
         password: hashedPassword,
         contactNo,
         role: "PO",
@@ -200,16 +221,17 @@ export const register = async (req, res) => {
 
       await newPO.save();
 
-      // Push PO reference to Company array
       targetCompany.PO.push(newPO._id);
       await targetCompany.save();
 
+      const token = generateToken(newPO);
       const responseData = newPO.toObject();
       delete responseData.password;
 
       return res.status(201).json({
         success: true,
         message: "Purchase Officer registered successfully and linked to Company",
+        token,
         data: responseData,
       });
     }
@@ -218,9 +240,9 @@ export const register = async (req, res) => {
     // VENDOR REGISTRATION
     // ----------------------------------------------------
     if (normalizedRole === "VENDOR") {
-      const { name, email, contactNo, country, description } = req.body;
+      const { name, contactNo, country, description } = req.body;
 
-      if (!name || !email || !contactNo || !country) {
+      if (!name || !contactNo || !country) {
         return res.status(400).json({
           success: false,
           message: "Name, email, contactNo, and country are required for Vendor registration",
@@ -236,7 +258,7 @@ export const register = async (req, res) => {
 
       const newVendor = new Vendor({
         name,
-        email,
+        email: email.toLowerCase().trim(),
         contactNo,
         country,
         description,
@@ -246,10 +268,15 @@ export const register = async (req, res) => {
 
       await newVendor.save();
 
+      const token = generateToken(newVendor);
+
+      const responseData = newVendor.toObject();
+
       return res.status(201).json({
         success: true,
         message: "Vendor registered successfully",
-        data: newVendor,
+        token,
+        data: responseData,
       });
     }
 

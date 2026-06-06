@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
-import { redis } from "../config/redis.js";
-import { generateOTP } from "../utils/generateOTP.js";
-import { sendEmail } from "../utils/sendEmail.js";
+import { redis } from "../../config/redis.js";
+import { generateOTP } from "./generateOTP.js";
+import { sendEmail } from "../../utils/sendEmail.js"; // fixed path
 
 export const sendOTP = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ export const sendOTP = async (req, res) => {
     const hashedOTP = await bcrypt.hash(otp, 10);
 
     await redis.set(`otp:${email}`, hashedOTP, {
-      EX: 300, // 5 minutes
+      EX: 300, // expires in 5 minutes
     });
 
     await sendEmail(email, otp);

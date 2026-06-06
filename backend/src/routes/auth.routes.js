@@ -1,11 +1,22 @@
 import { Router } from "express";
-const authRouter = Router()
-import { login } from "../controllers/auth.controller";
-import { loginValidator } from "../validator/auth.validate"
+const authRouter = Router();
 
+import { sendOTP } from "../controllers/AUTH/send-otp.js";
+import { verifyOTP } from "../controllers/AUTH/verifyOTP.js";
+import { register } from "../controllers/AUTH/registers.controller.js";
+import { login } from "../controllers/AUTH/login.controller.js";
 
-authRouter.post("/login",loginValidator,login)
+// Step 1 — request an OTP to be sent to the given email
+authRouter.post("/send-otp", sendOTP);
 
+// Step 2 (optional standalone) — verify OTP only
+authRouter.post("/verify-otp", verifyOTP);
 
+// Step 2+3 combined — send { email, otp, role, ...fields } to register
+// OTP is verified internally before user creation
+authRouter.post("/register", register);
 
-export default authRouter
+// Login
+authRouter.post("/login", login);
+
+export default authRouter;
