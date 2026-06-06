@@ -19,8 +19,6 @@ app.use(cookieParser())
 app.use("/api/auth",authRouter)
 app.use(morgan("dev"))
 
-console.log(process.env.RESEND_API_KEY)
-
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per window
