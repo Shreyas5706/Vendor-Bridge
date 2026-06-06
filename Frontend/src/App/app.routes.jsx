@@ -1,10 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Dashboard    from "../Features/DaashBoard/DashBoard";
-import LoginPage    from "../Features/auth/page/LoginPage";
-import RegisterPage from "../Features/auth/page/RegisterPage";
-import CompanyPage  from "../Features/DaashBoard/CompanyPage";
-import BridgeLoader from "../components/BridgeLoader";
+import Dashboard      from "../Features/DaashBoard/DashBoard";
+import LoginPage      from "../Features/auth/page/LoginPage";
+import RegisterPage   from "../Features/auth/page/RegisterPage";
+import CompanyPage    from "../Features/DaashBoard/CompanyPage";
+import CreateRFQPage  from "../Features/RFQ/CreateRFQPage";
 
 // A simple PrivateRoute wrapper to check if user exists
 function PrivateRoute({ children }) {
@@ -50,5 +50,19 @@ export const router = createBrowserRouter([
             <CompanyPage />
           </PrivateRoute>
         ),
-    }
+    },
+    {
+        path: "/rfq/create",
+        element: (
+          <PrivateRoute>
+            <CreateRFQPage />
+          </PrivateRoute>
+        ),
+    },  {
+        path: "/RFC",
+        element: (
+          <CreateRFQPage></CreateRFQPage>
+        ),
+    },
+
 ]);

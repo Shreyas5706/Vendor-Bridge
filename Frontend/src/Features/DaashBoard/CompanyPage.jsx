@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../auth/auth.slice';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
+import BridgeLoader from '../../components/BridgeLoader';
+import BridgeIcon from '../../assets/Bridge.png';
 
 /**
  * Company Dashboard Screen
@@ -48,14 +51,7 @@ const CompanyPage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="text-slate-500 font-medium text-sm">Loading Company Console...</p>
-        </div>
-      </div>
-    );
+    return <BridgeLoader fullscreen message="Loading Company Console…" />;
   }
 
   if (error) {
@@ -98,7 +94,7 @@ const CompanyPage = () => {
       <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-sm shadow-blue-600/20 font-sans">VB</div>
+            <img src={BridgeIcon} alt="VendorBridge" className="h-9 w-auto object-contain" />
             <div>
               <h1 className="text-lg font-black tracking-tight text-slate-900">
                 Vendor<span className="text-blue-600">Bridge</span>
@@ -335,7 +331,18 @@ const CompanyPage = () => {
             <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <h3 className="font-bold text-sm text-slate-900">RFQ Operations Matrix</h3>
-                <span className="text-[10px] text-slate-400 font-mono font-bold">{rfqs?.length || 0} records</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-slate-400 font-mono font-bold">{rfqs?.length || 0} records</span>
+                  <Link
+                    to="/rfq/create"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm shadow-blue-600/20"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create RFQ
+                  </Link>
+                </div>
               </div>
 
               {rfqs && rfqs.length > 0 ? (
