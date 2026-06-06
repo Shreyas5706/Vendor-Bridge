@@ -32,7 +32,7 @@ export default function CleanLandingPage() {
             </div>
 
             <Link to={"/login"}>
-            <button  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-white shadow-sm transition-all whitespace-nowrap">
+            <button  className="px-4 py-2 active:scale-95 rounded-lg bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-white shadow-sm transition-all whitespace-nowrap">
               Portal Login
             </button></Link>
           </div>
@@ -40,17 +40,95 @@ export default function CleanLandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
-        {/* Subtle high-tech world network graphic background mask */}
-        <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none flex items-center justify-center mix-blend-multiply scale-110">
-          <img 
-            src="https://png.pngtree.com/thumb_back/fh260/background/20240913/pngtree-global-connectivity-and-technical-networks-are-shown-by-an-abstract-digital-image_16197642.jpg" 
-            alt="World Map Supply Chain Pattern Graphic Overlay" 
-            className="w-full h-full object-cover"
-          />
-        </div>
+<section className="relative overflow-hidden border-b border-slate-100 bg-[#EEF3FA]">
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-20 pb-24 grid lg:grid-cols-12 gap-12 items-center">
+  {/* Main Blue Glow Behind Dashboard */}
+  <div className="absolute top-[6%] right-[10%] w-[650px] h-[650px] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+  {/* Top Right Curved Line Pattern */}
+  <div className="absolute top-0 right-0 w-[65%] h-[55%] opacity-[0.2] pointer-events-none z-0">
+    <svg
+      className="w-full h-full"
+      viewBox="0 0 900 500"
+      fill="none"
+      preserveAspectRatio="none"
+    >
+      {[...Array(8)].map((_, i) => (
+        <path
+          key={i}
+          d={`M ${900 - i * 45} 0 
+              Q 520 180 ${260 - i * 18} 500`}
+          stroke="#CBD5E1"
+          strokeWidth="1.3"
+        />
+      ))}
+    </svg>
+  </div>
+
+  {/* Left Top Dot Pattern */}
+  <div className="absolute top-20 left-0 opacity-[0.18] pointer-events-none z-0">
+    <div className="grid grid-cols-10 gap-[10px] pl-4">
+      {[...Array(120)].map((_, i) => (
+        <div
+          key={i}
+          className="w-[4px] h-[4px] rounded-full bg-blue-200"
+        />
+      ))}
+    </div>
+  </div>
+
+  {/* Right Bottom Dot Pattern */}
+  <div className="absolute bottom-10 right-0 opacity-[0.22] pointer-events-none z-0">
+    <div className="grid grid-cols-10 gap-[10px] pr-4">
+      {[...Array(120)].map((_, i) => (
+        <div
+          key={i}
+          className="w-[5px] h-[5px] rounded-full bg-blue-300"
+        />
+      ))}
+    </div>
+  </div>
+
+  {/* Bottom Left Network Lines */}
+  <div className="absolute bottom-0 left-0 w-[50%] h-[40%] opacity-[0.22] pointer-events-none z-0">
+    <svg
+      className="w-full h-full"
+      viewBox="0 0 700 300"
+      fill="none"
+    >
+      {/* Connecting Lines */}
+      <path
+        d="M20 220 L120 180 L220 240 L320 160 L450 210 L600 170"
+        stroke="#BFDBFE"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M40 270 L180 150 L290 220 L390 120 L540 200"
+        stroke="#DBEAFE"
+        strokeWidth="1.5"
+      />
+
+      {/* Nodes */}
+      {[
+        [20,220],[120,180],[220,240],[320,160],[450,210],[600,170],
+        [40,270],[180,150],[290,220],[390,120],[540,200]
+      ].map(([x,y],i)=>(
+        <circle
+          key={i}
+          cx={x}
+          cy={y}
+          r="5"
+          fill="#DBEAFE"
+        />
+      ))}
+    </svg>
+  </div>
+
+  {/* Bottom Right Circle Shape */}
+  <div className="absolute -bottom-24 right-[18%] w-[260px] h-[260px] rounded-full border-[35px] border-blue-200/30 z-0"></div>
+
+  {/* Hero Content */}
+  <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-20 pb-24 grid lg:grid-cols-12 gap-12 items-center">
           
           {/* Content Info */}
           <div className="space-y-6 lg:col-span-6 text-center lg:text-left">
@@ -68,7 +146,7 @@ export default function CleanLandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
-              <button className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-600/10 transition-all">
+              <button className="px-6 py-3 active:scale-95 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-600/10 transition-all">
                 Access Workspace Console
               </button>
               <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white font-bold text-sm text-slate-700 transition-all">
@@ -170,7 +248,11 @@ export default function CleanLandingPage() {
               { step: "07", title: "Direct Routing", desc: "Invoices print instantly or dispatch to vendor interfaces via internal email wire.", icon: "✉️" },
               { step: "08", title: "View Ledger", desc: "Every operation archives cleanly within dynamic analytical dashboards.", icon: "📈" }
             ].map((node, i) => (
-              <div key={i} className="relative bg-white border border-slate-200 p-5 rounded-2xl flex flex-col justify-between shadow-xs hover:border-blue-500/50 hover:shadow-md transition-all duration-300 group">
+              <div key={i} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 
+  hover:bg-white 
+  hover:border-slate-500 
+  hover:shadow-lg hover:shadow-slate-100 
+  transition-all duration-300">
                 
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">STEP {node.step}</span>
@@ -218,7 +300,13 @@ export default function CleanLandingPage() {
             { title: "3-Way Match Invoicing", desc: "Cross-checks corresponding Purchase Orders, Goods Received Notes, and Incoming Supplier Billing slips to avoid leakage.", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
             { title: "Immutable Trail Ledgers", desc: "Every state mutation, signature authorization, and system dispatch logs instantly onto an auditable sequence view.", icon: "M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" }
           ].map((item, idx) => (
-            <div key={idx} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 hover:bg-white hover:border-blue-500/40 hover:shadow-lg hover:shadow-slate-100 transition-all duration-300">
+            <div key={idx} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6
+  hover:bg-white
+  hover:border-blue-600
+  hover:ring-1 hover:ring-blue-200
+  hover:shadow-xl
+  hover:-translate-y-2
+  transition-all duration-300 ease-out">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-700 mb-4 shadow-xs">
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />

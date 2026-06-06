@@ -8,8 +8,9 @@ import { login }       from "../controllers/AUTH/login.controller.js";
 import { findCompany } from "../controllers/AUTH/find-company.js";
 import { checkAuth }   from "../controllers/AUTH/check-auth.js";
 import { logout }      from "../controllers/AUTH/logout.controller.js";
+import { resetPassword } from "../controllers/AUTH/reset-password.js";
 import { getCompanyDashboard } from "../controllers/AUTH/company-dashboard.js";
-import { createRFQ, getRFQs, getRFQById } from "../controllers/rfq.controller.js";
+import { createRFQ, getRFQs, getRFQById } from "../controllers/RFQ/rfq.controller.js";
 import { authUser }    from "../middleware/auth.middleware.js";
 
 // Step 1 — send OTP to an email address
@@ -17,6 +18,9 @@ authRouter.post("/send-otp", sendOTP);
 
 // Step 2 (optional standalone) — verify OTP only
 authRouter.post("/verify-otp", verifyOTP);
+
+// Reset Password — verify OTP and change password
+authRouter.post("/reset-password", resetPassword);
 
 // Used by MANAGER / PO to look up company by email before registering
 authRouter.get("/find-company", findCompany);
