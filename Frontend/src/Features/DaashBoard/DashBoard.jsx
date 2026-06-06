@@ -45,6 +45,125 @@ export default function CleanLandingPage() {
   {/* Main Blue Glow Behind Dashboard */}
   <div className="absolute top-[6%] right-[10%] w-[650px] h-[650px] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
+    {/* Premium Vendor Bridge Background */}
+<div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
+
+  <svg
+    viewBox="0 0 1400 700"
+    className="absolute top-[5%] left-[-8%] w-[120%] h-auto opacity-[0.28]"
+    fill="none"
+  >
+    {/* Left Tower */}
+    <rect
+      x="420"
+      y="120"
+      width="20"
+      height="340"
+      rx="4"
+      fill="#64748B"
+      opacity="0.8"
+    />
+
+    {/* Right Tower */}
+    <rect
+      x="930"
+      y="120"
+      width="20"
+      height="340"
+      rx="4"
+      fill="#64748B"
+      opacity="0.8"
+    />
+
+    {/* Main Cable */}
+    <path
+      d="
+        M120 340
+        Q 280 120 430 145
+        Q 700 90 940 145
+        Q 1100 120 1280 340
+      "
+      stroke="#475569"
+      strokeWidth="4"
+      strokeLinecap="round"
+      opacity="0.9"
+    />
+
+    {/* Secondary Cable */}
+    <path
+      d="
+        M140 360
+        Q 300 150 430 170
+        Q 700 120 940 170
+        Q 1100 150 1260 360
+      "
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+
+    {/* Hanging Cables */}
+    {[
+      470,510,550,590,630,670,710,750,790,830,870
+    ].map((x, i) => (
+      <line
+        key={i}
+        x1={x}
+        y1="160"
+        x2={x}
+        y2="340"
+        stroke="#64748B"
+        strokeWidth="2"
+        opacity="0.75"
+      />
+    ))}
+
+    {/* Bridge Road */}
+    <line
+      x1="130"
+      y1="340"
+      x2="1270"
+      y2="340"
+      stroke="#475569"
+      strokeWidth="7"
+      strokeLinecap="round"
+      opacity="0.9"
+    />
+
+    {/* Bottom Structural Arc */}
+    <path
+      d="
+        M250 340
+        Q 700 600 1150 340
+      "
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.65"
+    />
+
+    {/* Side Support Lines */}
+    <line
+      x1="430"
+      y1="145"
+      x2="430"
+      y2="340"
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+
+    <line
+      x1="940"
+      y1="145"
+      x2="940"
+      y2="340"
+      stroke="#64748B"
+      strokeWidth="2.5"
+      opacity="0.8"
+    />
+  </svg>
+</div>
+
   {/* Top Right Curved Line Pattern */}
   <div className="absolute top-0 right-0 w-[65%] h-[55%] opacity-[0.2] pointer-events-none z-0">
     <svg
