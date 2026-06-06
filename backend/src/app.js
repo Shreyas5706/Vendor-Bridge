@@ -3,11 +3,14 @@ import express from "express"
 import cors from "cors"
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import authRouter from "./routes/auth.routes";
 
 export const app = express();
 app.use(express.json())
 app.use(cookieParser())
+app.use("/api/auth",authRouter)
 app.use(morgan("dev"))
+
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 15 minutes
