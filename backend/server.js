@@ -6,6 +6,10 @@ import { app } from "./src/app.js";
 import { connectToDB } from "./src/config/db.js";
 import "./src/config/redis.js";
 
+app.get("/",(req,res)=>{
+  res.send("Server is Running")
+})
+
 const startServer = async () => {
   try {
     await connectToDB();
