@@ -271,9 +271,7 @@ The script automatically outputs testing credentials for a sample Vendor account
 
 ---
 
-# 📸 Screenshots
 
-> Add screenshots here
 
 ### Dashboard
 
