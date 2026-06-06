@@ -5,7 +5,7 @@ import LoginPage      from "../Features/auth/page/LoginPage";
 import RegisterPage   from "../Features/auth/page/RegisterPage";
 import CompanyPage    from "../Features/DaashBoard/CompanyPage";
 import CreateRFQPage  from "../Features/RFQ/CreateRFQPage";
-
+import NotFoundPage   from "../components/NotFoundPage";
 // A simple PrivateRoute wrapper to check if user exists
 function PrivateRoute({ children }) {
   const { user } = useSelector((state) => state.auth);
@@ -54,15 +54,15 @@ export const router = createBrowserRouter([
     {
         path: "/rfq/create",
         element: (
-          <PrivateRoute>
             <CreateRFQPage />
-          </PrivateRoute>
-        ),
-    },  {
-        path: "/RFC",
-        element: (
-          <CreateRFQPage></CreateRFQPage>
         ),
     },
 
+    {
+        // Catch-all: any unknown route → 404 page
+        path: "*",
+        element: <NotFoundPage />,
+    },
 ]);
+
+
