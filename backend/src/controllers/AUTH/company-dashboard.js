@@ -4,6 +4,8 @@ import Vendor from "../../models/vendor.model.js";
 import Manager from "../../models/manager.model.js";
 import PurchaseOfficer from "../../models/po.model.js";
 import Quotation from "../../models/quotation.model.js";
+import PurchaseOrder from "../../models/purchase-order.model.js";
+import Invoice from "../../models/invoice.model.js";
 
 /**
  * Get company dashboard data (manager, PO list, RFQs, and all Vendors)
@@ -58,6 +60,17 @@ export const getCompanyDashboard = async (req, res) => {
       .populate("rfqId", "title")
       .sort({ createdAt: -1 });
 
+    // 6. Find Purchase Orders
+    const pos = await PurchaseOrder.find({ companyId: companyIdToUse })
+      .populate("vendorId", "name email contactNo")
+      .populate("rfqId", "title")
+      .sort({ createdAt: -1 });
+
+    // 7. Find Invoices
+    const invoices = await Invoice.find({ companyId: companyIdToUse })
+      .populate("vendorId", "name email contactNo")
+      .sort({ createdAt: -1 });
+
     const companyResponse = company.toObject();
     if (companyResponse.password) delete companyResponse.password;
 
@@ -66,7 +79,9 @@ export const getCompanyDashboard = async (req, res) => {
       company: companyResponse,
       rfqs: rfqs,
       vendors: vendors,
-      quotations: quotations
+      quotations: quotations,
+      pos: pos,
+      invoices: invoices
     });
 
   } catch (error) {

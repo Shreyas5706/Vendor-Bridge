@@ -58,4 +58,9 @@ import { submitQuotation, approveQuotation } from "../controllers/RFQ/quotation.
 authRouter.post("/quotation", authUser, submitQuotation);
 authRouter.post("/quotation/:id/approve", authUser, approveQuotation);
 
+// PO & Invoice routes
+import { generatePO, generateInvoice } from "../controllers/RFQ/po.controller.js";
+authRouter.post("/po/generate", authUser, generatePO);
+authRouter.post("/invoice/generate", authUser, generateInvoice);
+
 export default authRouter;

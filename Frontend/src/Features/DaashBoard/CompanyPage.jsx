@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../auth/auth.slice';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import BridgeLoader from '../../components/BridgeLoader';
 import BridgeIcon from '../../assets/Bridge.png';
 import Sidebar from '../../components/Sidebar';
@@ -253,6 +255,75 @@ const CompanyPage = () => {
     }
   };
 
+  const [generatingPO, setGeneratingPO] = useState(null);
+  const handleGeneratePO = async (quotationId) => {
+    try {
+      setGeneratingPO(quotationId);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`http://localhost:3000/api/auth/po/generate`, { quotationId }, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+      if (response.data.success) {
+        alert(response.data.message);
+        fetchDashboard(); 
+        setCurrentView('pos'); // Navigate to POs tab
+      }
+    } catch (err) {
+      console.error('Generate PO error:', err);
+      alert(err.response?.data?.message || 'Failed to generate PO');
+    } finally {
+      setGeneratingPO(null);
+    }
+  };
+
+  const [generatingInvoice, setGeneratingInvoice] = useState(null);
+  const handleGenerateInvoice = async (poId) => {
+    try {
+      setGeneratingInvoice(poId);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`http://localhost:3000/api/auth/invoice/generate`, { poId }, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+      if (response.data.success) {
+        alert(response.data.message);
+        fetchDashboard(); 
+        setCurrentView('invoices'); // Navigate to Invoices tab
+      }
+    } catch (err) {
+      console.error('Generate Invoice error:', err);
+      alert(err.response?.data?.message || 'Failed to generate Invoice');
+    } finally {
+      setGeneratingInvoice(null);
+    }
+  };
+
+  const handleDownloadPDF = async (elementId, filename) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    try {
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${filename}.pdf`);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert("Failed to generate PDF");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-slate-900">
@@ -292,7 +363,7 @@ const CompanyPage = () => {
     );
   }
 
-  const { company, rfqs, vendors, quotations } = dashboardData || {};
+  const { company, rfqs, vendors, quotations, pos, invoices } = dashboardData || {};
 
   // Filters for vendor page
   const filteredVendors = vendors?.filter(vendor => {
@@ -390,14 +461,14 @@ const CompanyPage = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800">
-                        {mockPOs && mockPOs.length > 0 ? mockPOs.map((po, i) => (
+                        {pos && pos.length > 0 ? pos.slice(0, 5).map((po, i) => (
                           <tr key={i} className="hover:bg-slate-100/30 transition-colors">
                             <td className="py-3 font-mono font-bold text-slate-600">{po.poNumber}</td>
-                            <td className="py-3 text-slate-500">{po.vendor}</td>
-                            <td className="py-3 font-mono text-slate-600">{po.amount}</td>
+                            <td className="py-3 text-slate-500">{po.vendorId?.name || 'Unknown Vendor'}</td>
+                            <td className="py-3 font-mono text-slate-600">${po.grandTotal?.toFixed(2)}</td>
                             <td className="py-3 text-right">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
-                                po.status === 'Approved' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
+                                po.status === 'ISSUED' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                               }`}>
                                 {po.status}
                               </span>
@@ -993,7 +1064,7 @@ const CompanyPage = () => {
                             <td className="py-4 px-4 font-mono font-bold text-blue-600">${q.totalAmount?.toFixed(2)}</td>
                             <td className="py-4 px-4 text-slate-500 max-w-[200px] truncate">{q.deliveryNotes || '-'}</td>
                             <td className="py-4 px-4 text-slate-500 font-mono">{new Date(q.createdAt).toLocaleDateString()}</td>
-                            <td className="py-4 px-4 text-right">
+                            <td className="py-4 px-4 text-right flex items-center justify-end gap-2">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${
                                 q.status === 'ACCEPTED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                 q.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200' :
@@ -1001,6 +1072,22 @@ const CompanyPage = () => {
                               }`}>
                                 {q.status || 'PENDING'}
                               </span>
+                              
+                              {/* Show Generate PO if ACCEPTED and we haven't already generated a PO */}
+                              {q.status === 'ACCEPTED' && !pos?.some(p => p.quotationId === q._id) && (
+                                <button
+                                  onClick={() => handleGeneratePO(q._id)}
+                                  disabled={generatingPO === q._id}
+                                  className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-colors"
+                                >
+                                  {generatingPO === q._id ? 'Generating...' : 'Generate PO'}
+                                </button>
+                              )}
+                              {q.status === 'ACCEPTED' && pos?.some(p => p.quotationId === q._id) && (
+                                <span className="ml-2 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-500 rounded text-[9px] font-bold uppercase tracking-wider">
+                                  PO Generated
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1090,7 +1177,7 @@ const CompanyPage = () => {
               <div className="bg-white border border-slate-200 rounded overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 bg-slate-50/30 flex justify-between items-center">
                   <span className="font-bold text-xs uppercase text-slate-500 font-mono">Issued Purchase Orders</span>
-                  <span className="text-[10px] text-slate-500 font-mono">{mockPOs ? mockPOs.length : 0} records</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{pos ? pos.length : 0} records</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
@@ -1099,26 +1186,44 @@ const CompanyPage = () => {
                         <th className="py-3 px-5">PO Number</th>
                         <th className="py-3 px-5">Vendor</th>
                         <th className="py-3 px-5">Amount</th>
-                        <th className="py-3 px-5">Release Date</th>
-                        <th className="py-3 px-5 text-right">Status</th>
+                        <th className="py-3 px-5">Date</th>
+                        <th className="py-3 px-5">Status</th>
+                        <th className="py-3 px-5 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {mockPOs.map((po, idx) => (
-                        <tr key={idx} className="hover:bg-slate-100/30 transition-colors">
-                          <td className="py-3.5 px-5 font-mono font-bold text-blue-600">{po.poNumber}</td>
-                          <td className="py-3.5 px-5 text-slate-600 font-bold">{po.vendor}</td>
-                          <td className="py-3.5 px-5 text-slate-500 font-mono font-semibold">{po.amount}</td>
-                          <td className="py-3.5 px-5 text-slate-500 font-mono">{po.date}</td>
-                          <td className="py-3.5 px-5 text-right">
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
-                              po.status === 'Approved' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
-                            }`}>
-                              {po.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                        {pos && pos.length > 0 ? pos.map((po, i) => (
+                          <tr key={i} className="hover:bg-slate-100/30 transition-colors">
+                            <td className="py-3.5 px-5 font-mono font-bold text-slate-700">{po.poNumber}</td>
+                            <td className="py-3.5 px-5 text-slate-600">{po.vendorId?.name || 'Unknown'}</td>
+                            <td className="py-3.5 px-5 font-mono text-slate-600">${po.grandTotal?.toFixed(2)}</td>
+                            <td className="py-3.5 px-5 text-slate-500 font-mono">{new Date(po.createdAt).toLocaleDateString()}</td>
+                            <td className="py-3.5 px-5">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                                po.status === 'ISSUED' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                              }`}>
+                                {po.status}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-5 text-right flex items-center justify-end gap-2">
+                              {!invoices?.some(inv => inv.poId === po._id) ? (
+                                <button
+                                  onClick={() => handleGenerateInvoice(po._id)}
+                                  disabled={generatingInvoice === po._id}
+                                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-colors"
+                                >
+                                  {generatingInvoice === po._id ? 'Generating...' : 'Generate Invoice'}
+                                </button>
+                              ) : (
+                                <span className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-500 rounded text-[9px] font-bold uppercase tracking-wider">
+                                  Invoiced
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan="6" className="py-4 text-center text-slate-500">No POs found</td></tr>
+                        )}
                     </tbody>
                   </table>
                 </div>
@@ -1132,46 +1237,137 @@ const CompanyPage = () => {
           {currentView === 'invoices' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-2xl font-black text-slate-900">Invoices</h3>
-                <p className="text-slate-500 text-xs mt-1">Audit billing slips matching released purchase orders</p>
+                <h3 className="text-2xl font-black text-slate-900">Commercial Invoices</h3>
+                <p className="text-slate-500 text-xs mt-1">Manage vendor payments and download invoice PDFs</p>
               </div>
 
               <div className="bg-white border border-slate-200 rounded overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 bg-slate-50/30 flex justify-between items-center">
-                  <span className="font-bold text-xs uppercase text-slate-500 font-mono">Invoice Ledger Match</span>
-                  <span className="text-[10px] text-slate-500 font-mono">{mockInvoices.length} entries</span>
+                  <span className="font-bold text-xs uppercase text-slate-500 font-mono">Invoice Ledger</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{invoices ? invoices.length : 0} records</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 text-[9px] text-slate-500 font-black uppercase tracking-wider bg-slate-50/20">
                         <th className="py-3 px-5">Invoice Number</th>
-                        <th className="py-3 px-5">Matching PO</th>
-                        <th className="py-3 px-5">Vendor Name</th>
-                        <th className="py-3 px-5">Amount Due</th>
-                        <th className="py-3 px-5 text-right">Payment Status</th>
+                        <th className="py-3 px-5">Amount</th>
+                        <th className="py-3 px-5">Due Date</th>
+                        <th className="py-3 px-5">Status</th>
+                        <th className="py-3 px-5 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {mockInvoices.map((inv, idx) => (
-                        <tr key={idx} className="hover:bg-slate-100/30 transition-colors">
-                          <td className="py-3.5 px-5 font-mono font-bold text-slate-600">{inv.invNumber}</td>
-                          <td className="py-3.5 px-5 font-mono text-slate-500">{inv.poNumber}</td>
-                          <td className="py-3.5 px-5 text-slate-600">{inv.vendor}</td>
-                          <td className="py-3.5 px-5 text-slate-500 font-mono font-semibold">{inv.amount}</td>
-                          <td className="py-3.5 px-5 text-right">
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
-                              inv.status === 'Paid' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
-                            }`}>
-                              {inv.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                        {invoices && invoices.length > 0 ? invoices.map((inv, i) => (
+                          <tr key={i} className="hover:bg-slate-100/30 transition-colors">
+                            <td className="py-3.5 px-5 font-mono font-bold text-slate-700">{inv.invoiceNumber}</td>
+                            <td className="py-3.5 px-5 font-mono text-slate-600">${inv.amount?.toFixed(2)}</td>
+                            <td className="py-3.5 px-5 text-slate-500 font-mono">{new Date(inv.dueDate).toLocaleDateString()}</td>
+                            <td className="py-3.5 px-5">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${
+                                inv.status === 'PAID' 
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                                  : 'bg-rose-50 text-rose-600 border-rose-200'
+                              }`}>
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-5 text-right flex gap-2 justify-end">
+                              <button 
+                                onClick={() => handleDownloadPDF(`invoice-pdf-${inv._id}`, inv.invoiceNumber)}
+                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded text-[9px] font-bold uppercase tracking-wider transition-colors"
+                              >
+                                Download PDF
+                              </button>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan="5" className="py-4 text-center text-slate-500">No invoices found</td></tr>
+                        )}
                     </tbody>
                   </table>
                 </div>
               </div>
+
+              {/* OFF-SCREEN INVOICE TEMPLATES FOR PDF GENERATION */}
+              <div className="absolute left-[-9999px] top-[-9999px] opacity-0 pointer-events-none">
+                {invoices && invoices.map((inv) => {
+                  const relatedPO = pos?.find(p => p._id === inv.poId);
+                  return (
+                    <div id={`invoice-pdf-${inv._id}`} key={`pdf-${inv._id}`} className="p-10 w-[800px] bg-[#ffffff] text-[#0f172a] border border-[#e2e8f0]">
+                      <div className="flex justify-between items-start border-b-2 border-[#2563eb] pb-6 mb-6">
+                        <div>
+                          <h1 className="text-4xl font-black tracking-tight text-[#2563eb] uppercase">INVOICE</h1>
+                          <p className="text-sm font-bold text-[#64748b] mt-1">{inv.invoiceNumber}</p>
+                        </div>
+                        <div className="text-right text-sm">
+                          <p className="font-bold">{company?.name || 'Your Company'}</p>
+                          <p className="text-[#64748b]">{company?.country || 'Global'}</p>
+                          <p className="text-[#64748b] mt-2 font-mono">Date: {new Date(inv.createdAt).toLocaleDateString()}</p>
+                          <p className="text-[#64748b] font-mono">Due: {new Date(inv.dueDate).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between mb-8">
+                        <div className="w-1/2">
+                          <h3 className="text-xs font-black uppercase text-[#94a3b8] mb-2">Billed To:</h3>
+                          <p className="font-bold text-lg">{company?.name}</p>
+                          <p className="text-[#64748b] text-sm">PO Number: {relatedPO?.poNumber}</p>
+                        </div>
+                        <div className="w-1/2 text-right">
+                          <h3 className="text-xs font-black uppercase text-[#94a3b8] mb-2">Pay To Vendor:</h3>
+                          <p className="font-bold text-lg">{inv.vendorId?.name}</p>
+                          <p className="text-[#64748b] text-sm">{inv.vendorId?.email}</p>
+                          <p className="text-[#64748b] text-sm">{inv.vendorId?.contactNo}</p>
+                        </div>
+                      </div>
+
+                      <table className="w-full text-left mb-8 border-collapse">
+                        <thead>
+                          <tr className="text-xs font-black uppercase bg-[#f1f5f9] text-[#475569]">
+                            <th className="p-3 border border-[#e2e8f0]">Description</th>
+                            <th className="p-3 border border-[#e2e8f0] text-center">Qty</th>
+                            <th className="p-3 border border-[#e2e8f0] text-right">Unit Price</th>
+                            <th className="p-3 border border-[#e2e8f0] text-right">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {relatedPO?.items?.map((item, idx) => (
+                            <tr key={idx} className="border-b border-[#e2e8f0] text-sm">
+                              <td className="p-3">{item.productName}</td>
+                              <td className="p-3 text-center">{item.quantity} {item.unit}</td>
+                              <td className="p-3 text-right font-mono">${item.unitPrice?.toFixed(2)}</td>
+                              <td className="p-3 text-right font-mono font-bold">${item.total?.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div className="flex justify-end mb-12">
+                        <div className="w-1/2">
+                          <div className="flex justify-between p-2 border-b border-[#e2e8f0] text-sm">
+                            <span className="font-bold text-[#64748b]">Subtotal:</span>
+                            <span className="font-mono">${relatedPO?.subTotal?.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between p-2 border-b border-[#e2e8f0] text-sm">
+                            <span className="font-bold text-[#64748b]">Tax ({relatedPO?.taxPercent}% GST):</span>
+                            <span className="font-mono">${relatedPO?.taxAmount?.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between p-3 mt-2 rounded bg-[#eff6ff] text-[#1e3a8a] border-2 border-[#bfdbfe]">
+                            <span className="font-black uppercase tracking-widest">Grand Total:</span>
+                            <span className="font-black font-mono text-xl">${inv.amount?.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-[#e2e8f0] pt-6 text-center text-xs text-[#64748b]">
+                        <p>Payment is due within 30 days. Thank you for your business.</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
             </div>
           )}
 
