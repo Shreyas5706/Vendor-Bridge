@@ -367,11 +367,13 @@ export default function CleanLandingPage() {
               { step: "07", title: "Direct Routing", desc: "Invoices print instantly or dispatch to vendor interfaces via internal email wire.", icon: "✉️" },
               { step: "08", title: "View Ledger", desc: "Every operation archives cleanly within dynamic analytical dashboards.", icon: "📈" }
             ].map((node, i) => (
-              <div key={i} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 
-  hover:bg-white 
-  hover:border-slate-500 
-  hover:shadow-lg hover:shadow-slate-100 
-  transition-all duration-300">
+              <div key={i} className="group bg-slate-50/50 border border-slate-500/60 rounded-xl p-6
+                hover:bg-white
+                hover:border-blue-600
+                hover:ring-1 hover:ring-blue-200
+                hover:shadow-xl
+                hover:-translate-y-2
+                transition-all duration-300 ease-out">
                 
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">STEP {node.step}</span>
@@ -419,13 +421,13 @@ export default function CleanLandingPage() {
             { title: "3-Way Match Invoicing", desc: "Cross-checks corresponding Purchase Orders, Goods Received Notes, and Incoming Supplier Billing slips to avoid leakage.", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
             { title: "Immutable Trail Ledgers", desc: "Every state mutation, signature authorization, and system dispatch logs instantly onto an auditable sequence view.", icon: "M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" }
           ].map((item, idx) => (
-            <div key={idx} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6
-  hover:bg-white
-  hover:border-blue-600
-  hover:ring-1 hover:ring-blue-200
-  hover:shadow-xl
-  hover:-translate-y-2
-  transition-all duration-300 ease-out">
+            <div key={idx} className="bg-slate-50/50 border border-slate-400/60 rounded-xl p-6
+              hover:bg-white
+              hover:border-blue-600
+              hover:ring-1 hover:ring-blue-200
+              hover:shadow-xl
+              hover:-translate-y-2
+              transition-all duration-300 ease-out">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-700 mb-4 shadow-xs">
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
