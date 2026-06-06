@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { loginUser, clearAuthError } from "../auth.slice"
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate()
 
   // Redux Hooks for Global Auth State Management
   const dispatch = useDispatch();
@@ -21,6 +24,7 @@ export default function LoginPage() {
     
     // Dispatch credentials bundle payload directly to the asynchronous authSlice thunk
     dispatch(loginUser({ email, password }));
+
   };
 
   return (
@@ -172,9 +176,15 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="text-center pt-2">
+            <div className="text-center pt-2 space-y-2">
               <p className="text-xs text-slate-400">
                 Authorized access terminal profiles only. Actions are auditable under master ledger logs.
+              </p>
+              <p className="text-xs text-slate-500">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-semibold text-blue-600 hover:underline underline-offset-2">
+                  Create account →
+                </Link>
               </p>
             </div>
 

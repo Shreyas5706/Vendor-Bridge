@@ -1,6 +1,6 @@
 import React from 'react';
 import Bridge from "../../../src/assets/Bridge.png"
-
+import {Link} from "react-router-dom"
 export default function CleanLandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-blue-100">
@@ -31,9 +31,10 @@ export default function CleanLandingPage() {
               <a href="#workflow" className="hover:text-blue-600 transition-colors">Process Map</a>
             </div>
 
-            <button className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-white shadow-sm transition-all whitespace-nowrap">
+            <Link to={"/login"}>
+            <button  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 font-semibold text-sm text-white shadow-sm transition-all whitespace-nowrap">
               Portal Login
-            </button>
+            </button></Link>
           </div>
         </div>
       </nav>

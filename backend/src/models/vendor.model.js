@@ -36,7 +36,11 @@ const vendorSchema = new mongoose.Schema(
     role:{
         type:String,
         enum:["PO","COMPANY","MANAGER","VENDOR","ADMIN"]
-    }
+    },
+    password: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

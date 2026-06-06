@@ -1,21 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 // 1. Async Thunk for API Login Integration
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (loginPayload, { rejectWithValue }) => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginPayload),
-      });
+      const response = await axios.post('http://localhost:3000/api/auth/login', loginPayload);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return rejectWithValue(data.message || 'Authorization failed.');
-      }
+      const data = response.data;
 
       // Store token safely if needed
       if (data.token) {
@@ -24,15 +17,55 @@ export const loginUser = createAsyncThunk(
 
       return data.user; // Expected user data payload from API backend
     } catch (error) {
-      return rejectWithValue(error.message || 'Network connection error.');
+      return rejectWithValue(error.response?.data?.message || error.message || 'Network connection error.');
     }
   }
 );
 
-// 2. Initial State Parameters Definitions
+// 2. Async Thunk for Checking Session Auth
+export const checkAuth = createAsyncThunk(
+  'auth/checkAuth',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Send token if present in localStorage, and include credentials for cookies
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      };
+      const response = await axios.get('http://localhost:3000/api/auth/check', config);
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Session invalid');
+    }
+  }
+);
+
+// 3. Async Thunk for Logging Out (Blacklisting token)
+export const logoutUser = createAsyncThunk(
+  'auth/logoutUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      };
+      await axios.post('http://localhost:3000/api/auth/logout', {}, config);
+      localStorage.removeItem('token');
+      return true;
+    } catch (error) {
+      // Even if API fails, clear local storage
+      localStorage.removeItem('token');
+      return rejectWithValue(error.response?.data?.message || 'Logout failed');
+    }
+  }
+);
+
+// 4. Initial State Parameters Definitions
 const initialState = {
   user: null,
-  loading: false,
+  loading: true, // Start as true so app can wait for checkAuth on mount
   error: null,
 };
 
@@ -69,6 +102,32 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.error = action.payload;
+      })
+      // Check Auth
+      .addCase(checkAuth.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(checkAuth.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+        localStorage.removeItem('token');
+      })
+      // Logout User
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
       });
   },
 });
