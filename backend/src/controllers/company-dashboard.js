@@ -1,9 +1,8 @@
 import Company from "../../models/company.model.js";
 import RFQ from "../../models/rfq.model.js";
-import Vendor from "../../models/vendor.model.js";
 
 /**
- * Get company dashboard data (manager, PO list, RFQs, and all Vendors)
+ * Get company dashboard data (manager, PO list, and RFQs)
  */
 export const getCompanyDashboard = async (req, res) => {
   try {
@@ -11,8 +10,8 @@ export const getCompanyDashboard = async (req, res) => {
 
     // 1. Find the company and populate manager and PO list
     const company = await Company.findById(userId)
-      .populate("manager", "name email contactNo role createdAt")
-      .populate("PO", "name email contactNo role createdAt");
+      .populate("manager", "name email contactNo role")
+      .populate("PO", "name email contactNo role");
 
     if (!company) {
       return res.status(403).json({
@@ -32,17 +31,13 @@ export const getCompanyDashboard = async (req, res) => {
       .populate("assignedVendors", "name email contactNo status")
       .sort({ createdAt: -1 });
 
-    // 4. Fetch all vendors so the company can see and manage supplier profiles
-    const vendors = await Vendor.find({}).sort({ createdAt: -1 });
-
     const companyResponse = company.toObject();
     if (companyResponse.password) delete companyResponse.password;
 
     return res.status(200).json({
       success: true,
       company: companyResponse,
-      rfqs: rfqs,
-      vendors: vendors
+      rfqs: rfqs
     });
 
   } catch (error) {
