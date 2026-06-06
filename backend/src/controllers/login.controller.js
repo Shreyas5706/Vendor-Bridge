@@ -1,12 +1,14 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import Company from "../models/company.model.js";
 import Manager from "../models/manager.model.js";
 import PurchaseOfficer from "../models/po.model.js";
+import Vendor from "../models/vendor.model.js";
+import { generateToken } from "../utils/generateToken.js";
 
 /**
  * Basic login controller
- * Takes email and password, checks in Company, Manager, and PurchaseOfficer collections
+ * Takes email and password, checks in Company, Manager, PurchaseOfficer, and Vendor collections.
+ * Uses generateToken utility to sign the JWT.
  */
 export const login = async (req, res) => {
   try {
@@ -22,7 +24,7 @@ export const login = async (req, res) => {
 
     const lowercaseEmail = email.toLowerCase().trim();
 
-    // 2. Find user in Company, Manager, or PurchaseOfficer collections
+    // 2. Find user in Company, Manager, PurchaseOfficer, or Vendor collections
     let user = null;
     let roleType = null;
 
@@ -48,6 +50,14 @@ export const login = async (req, res) => {
       }
     }
 
+    // Check Vendor
+    if (!user) {
+      user = await Vendor.findOne({ email: lowercaseEmail });
+      if (user) {
+        roleType = "VENDOR";
+      }
+    }
+
     // 3. Handle user not found
     if (!user) {
       return res.status(401).json({
@@ -57,44 +67,43 @@ export const login = async (req, res) => {
     }
 
     // 4. Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+    if (roleType === "VENDOR") {
+      // Since Vendor schema has no password field, we verify the user exists and is active.
+      if (user.status === "INACTIVE") {
+        return res.status(403).json({
+          success: false,
+          message: "Your Vendor account is INACTIVE. Please contact administration.",
+        });
+      }
+    } else {
+      // For Company, Manager, and PO, verify password with bcrypt
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid email or password",
+        });
+      }
     }
 
-    // 5. Generate JWT Token
-    if (!process.env.JWT_SECRET) {
-      console.warn("WARNING: JWT_SECRET is not defined in environment variables.");
-    }
-
-    const payload = {
-      id: user._id,
-      email: user.email,
-      role: user.role || roleType,
-    };
-
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET || "vendor_bridge_jwt_secret_key_2026", // Fallback for testing, but should be set in .env
-      { expiresIn: "1d" }
-    );
+    // 5. Generate JWT Token using utility
+    const token = generateToken(user);
 
     // 6. Set token in HTTP-only cookie
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches the token expiry of 7d)
     };
 
     res.cookie("token", token, cookieOptions);
 
-    // 7. Return user info (excluding password)
+    // 7. Return user info (excluding password if it exists)
     const userResponse = user.toObject();
-    delete userResponse.password;
+    if (userResponse.password) {
+      delete userResponse.password;
+    }
 
     return res.status(200).json({
       success: true,
