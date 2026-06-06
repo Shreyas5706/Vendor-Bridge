@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearAuthError } from './authSlice'; // Ensure this matches your path configuration
+import { loginUser, clearAuthError } from "../auth.slice"
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
