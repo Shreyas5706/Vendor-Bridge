@@ -1,5 +1,5 @@
 import Company from "../../models/company.model.js";
-import RFQ from "../../models/rfq.model.js";
+import RFQ from "../models/rfq.model.js";
 
 /**
  * Get company dashboard data (manager, PO list, and RFQs)
