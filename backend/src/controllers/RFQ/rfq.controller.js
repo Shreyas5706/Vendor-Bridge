@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import RFQ from "../models/rfq.model.js";
-import PurchaseOfficer from "../models/po.model.js";
-import Vendor from "../models/vendor.model.js";
-import Manager from "../models/manager.model.js";
+import RFQ from "../../models/rfq.model.js";
+import PurchaseOfficer from "../../models/po.model.js";
+import Vendor from "../../models/vendor.model.js";
+import Manager from "../../models/manager.model.js";
 
 /**
  * Create a new Request for Quotation (RFQ)
