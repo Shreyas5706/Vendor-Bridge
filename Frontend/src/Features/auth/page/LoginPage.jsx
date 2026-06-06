@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { loginUser, clearAuthError } from "../auth.slice";
 import { useNavigate } from 'react-router-dom';
-import BridgeLoader from '../../../components/BridgeLoader';
 import BridgeIcon from '../../../assets/Bridge.png';
 
 export default function LoginPage() {
@@ -131,9 +130,9 @@ export default function LoginPage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                     Password
                   </label>
-                  <a href="#" className="text-xs text-blue-600 hover:underline font-semibold">
+                  <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline font-semibold">
                     Forgot Key?
-                  </a>
+                  </Link>
                 </div>
                 <input
                   type="password"

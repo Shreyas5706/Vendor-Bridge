@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Dashboard      from "../Features/DaashBoard/DashBoard";
 import LoginPage      from "../Features/auth/page/LoginPage";
+import ForgotPasswordPage from "../Features/auth/page/ForgotPasswordPage";
 import RegisterPage   from "../Features/auth/page/RegisterPage";
 import CompanyPage    from "../Features/DaashBoard/CompanyPage";
 import CreateRFQPage  from "../Features/RFQ/CreateRFQPage";
@@ -40,6 +41,14 @@ export const router = createBrowserRouter([
         element: (
           <PublicRoute>
             <RegisterPage />
+          </PublicRoute>
+        ),
+    },
+    {
+        path: "/forgot-password",
+        element: (
+          <PublicRoute>
+            <ForgotPasswordPage />
           </PublicRoute>
         ),
     },
