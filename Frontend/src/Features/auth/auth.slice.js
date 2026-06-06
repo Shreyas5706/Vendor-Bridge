@@ -6,7 +6,7 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (loginPayload, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', loginPayload);
+      const response = await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/login`, loginPayload);
 
       const data = response.data;
 
@@ -33,7 +33,7 @@ export const checkAuth = createAsyncThunk(
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       };
-      const response = await axios.get('http://localhost:3000/api/auth/check', config);
+      const response = await axios.get(`${import.meta.env.BACKEND_URL}/api/auth/check`, config);
       return response.data.user;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Session invalid');
@@ -51,7 +51,7 @@ export const logoutUser = createAsyncThunk(
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       };
-      await axios.post('http://localhost:3000/api/auth/logout', {}, config);
+      await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/logout`, {}, config);
       localStorage.removeItem('token');
       return true;
     } catch (error) {

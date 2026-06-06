@@ -123,7 +123,7 @@ const CompanyPage = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       };
-      const response = await axios.get('http://localhost:3000/api/auth/company-dashboard', config);
+      const response = await axios.get(`${import.meta.env.BACKEND_URL}/api/auth/company-dashboard`, config);
       if (response.data.success) {
         setDashboardData(response.data);
       } else {
@@ -155,7 +155,7 @@ const CompanyPage = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:3000/api/auth/register',
+        `${import.meta.env.BACKEND_URL}/api/auth/register`,
         {
           role: 'VENDOR',
           ...newVendorData,
@@ -213,7 +213,7 @@ const CompanyPage = () => {
         assignedVendors: selectedVendors,
       };
 
-      const response = await axios.post('http://localhost:3000/api/auth/rfq', payload, config);
+      const response = await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/rfq`, payload, config);
 
       if (response.data.success) {
         setRfqSuccessMsg('RFQ created successfully and sent to assigned vendors!');
@@ -240,7 +240,7 @@ const CompanyPage = () => {
     try {
       setApprovingQuote(quotationId);
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/auth/quotation/${quotationId}/approve`, {}, {
+      const response = await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/quotation/${quotationId}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
@@ -249,7 +249,7 @@ const CompanyPage = () => {
         fetchDashboard(); // Refresh all data to show new statuses
       }
     } catch (err) {
-      console.error('Approve quotation error:', err);
+      console.error(`Approve quotation error:', err);
       alert(err.response?.data?.message || 'Failed to approve quotation');
     } finally {
       setApprovingQuote(null);
@@ -261,14 +261,14 @@ const CompanyPage = () => {
     try {
       setGeneratingPO(quotationId);
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/auth/po/generate`, { quotationId }, {
+      const response = await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/po/generate`, { quotationId }, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
       if (response.data.success) {
         alert(response.data.message);
         fetchDashboard(); 
-        setCurrentView('pos'); // Navigate to POs tab
+        setCurrentView(`pos'); // Navigate to POs tab
       }
     } catch (err) {
       console.error('Generate PO error:', err);
@@ -283,14 +283,14 @@ const CompanyPage = () => {
     try {
       setGeneratingInvoice(poId);
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/auth/invoice/generate`, { poId }, {
+      const response = await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/invoice/generate`, { poId }, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
       if (response.data.success) {
         alert(response.data.message);
         fetchDashboard(); 
-        setCurrentView('invoices'); // Navigate to Invoices tab
+        setCurrentView(`invoices'); // Navigate to Invoices tab
       }
     } catch (err) {
       console.error('Generate Invoice error:', err);

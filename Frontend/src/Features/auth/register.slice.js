@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const BASE = 'http://localhost:3000/api/auth';
+const BASE = `${import.meta.env.BACKEND_URL}/api/auth`;
 
 // ─── Async Thunks ────────────────────────────────────────────────────────────
 

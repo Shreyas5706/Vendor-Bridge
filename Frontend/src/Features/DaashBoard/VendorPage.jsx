@@ -39,7 +39,7 @@ const VendorPage = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       };
-      const response = await axios.get('http://localhost:3000/api/auth/vendor-dashboard', config);
+      const response = await axios.get(`${import.meta.env.BACKEND_URL}/api/auth/vendor-dashboard`, config);
       if (response.data.success) {
         setDashboardData(response.data);
       } else {
@@ -82,7 +82,7 @@ const VendorPage = () => {
         }))
       };
       
-      await axios.post('http://localhost:3000/api/auth/quotation', payload, {
+      await axios.post(`${import.meta.env.BACKEND_URL}/api/auth/quotation`, payload, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
