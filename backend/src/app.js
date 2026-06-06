@@ -9,7 +9,11 @@ export const app = express();
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: [
+      process.env.FRONTEND_URL,
+      "https://vendor-bridge-iota.vercel.app",
+      "http://localhost:5173"
+    ].filter(Boolean),
     credentials: true,
   })
 );
