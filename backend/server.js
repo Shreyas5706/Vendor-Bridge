@@ -1,15 +1,22 @@
-import { app } from "./src/app.js";
-import { connectToDB } from "./src/config/db.js";
 import { configDotenv } from "dotenv";
 
-configDotenv()
-connectToDB()
+configDotenv();
 
-app.listen(process.env.PORT,()=>{
-    try{
-        console.log(`Serever is Running on ${process.env.PORT}`)
-    }
-    catch(err){
-        console.log("Error in Server : ",err)
-    }
-})
+import { app } from "./src/app.js";
+import { connectToDB } from "./src/config/db.js";
+import "./src/config/redis.js";
+
+const startServer = async () => {
+  try {
+    await connectToDB();
+
+    app.listen(process.env.PORT, () => {
+      console.log(`Server is Running on ${process.env.PORT} 🚀`);
+    });
+  } catch (err) {
+    console.log("Server Startup Error:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
